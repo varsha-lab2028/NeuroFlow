@@ -30,6 +30,10 @@ The folder contains:
 
 **Glitchmore Girls** — building at the intersection of neuroscience and technology.
 
+Disha Kukkal
+Yashswinie Arya
+Varshamegana Atmakuri
+
 ---
 
 ## 📬 Contact
