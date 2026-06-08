@@ -1,4 +1,4 @@
-package com.neuroflow.dao;
+package com.neuroflow.config;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -78,15 +78,17 @@ public class DatabaseManager {
                 week_start TEXT NOT NULL,
                 count INTEGER DEFAULT 0
             )""");
-        // Assignments
+        //Practice Activities
         st.execute("""
-            CREATE TABLE IF NOT EXISTS assignments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                educator_id INTEGER REFERENCES users(id),
-                title TEXT NOT NULL,
-                description TEXT,
-                completed INTEGER DEFAULT 0,
-                week_date TEXT NOT NULL
+            CREATE TABLE IF NOT EXISTS practice_activities (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            educator_id INTEGER REFERENCES users(id),
+            title TEXT NOT NULL,
+            description TEXT,
+            completed INTEGER DEFAULT 0,
+            week_date TEXT NOT NULL,
+            activity_type TEXT DEFAULT 'classroom_focus',
+            shared_with_parents INTEGER DEFAULT 0
             )""");
         // App settings
         st.execute("""
@@ -174,15 +176,16 @@ public class DatabaseManager {
         }
         ps.close();
 
-        // Assignments
-        String[][] assignments = {
-            {"7","Letters b & d","Visual discrimination — bump direction awareness","1",today},
-            {"7","Letters p & q","Below-the-line letter shapes","0",today},
-            {"7","Numbers 1–5","Number formation and counting","0",today},
-            {"7","Sequencing patterns","What comes next — shapes and colours","0",today}
+        // practice activities
+        String[][] activities = {
+                {"7","Letters b & d","Visual discrimination — bump direction awareness","1",today,"classroom_focus","1"},
+                {"7","Letters p & q","Below-the-line letter shapes","0",today,"classroom_focus","0"},
+                {"7","Numbers 1–5","Number formation and counting","0",today,"classroom_focus","0"},
+                {"7","Sequencing patterns","What comes next — shapes and colours","0",today,"classroom_focus","0"}
         };
-        ps = connection.prepareStatement("INSERT INTO assignments(educator_id,title,description,completed,week_date) VALUES(?,?,?,?,?)");
-        for (String[] a : assignments) {
+        ps = connection.prepareStatement(
+                "INSERT INTO practice_activities(educator_id,title,description,completed,week_date,activity_type,shared_with_parents) VALUES(?,?,?,?,?,?,?)");
+        for (String[] a : activities) {
             for (int i = 0; i < a.length; i++) ps.setString(i+1, a[i]);
             ps.executeUpdate();
         }

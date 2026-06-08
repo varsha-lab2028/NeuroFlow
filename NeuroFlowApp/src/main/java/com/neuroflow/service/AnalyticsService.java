@@ -1,14 +1,21 @@
 package com.neuroflow.service;
 
-import com.neuroflow.dao.AssignmentDAO;
-import com.neuroflow.model.Assignment;
+import com.neuroflow.dao.ErrorPatternDao;
+import com.neuroflow.dao.PracticeActivityDao;
+import com.neuroflow.dao.StudentDao;
+import com.neuroflow.model.PracticeActivity;
+import com.neuroflow.model.Student;
 import java.io.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public class AnalyticsService {
+
     private static AnalyticsService instance;
-    private final AssignmentDAO assignDAO = new AssignmentDAO();
+    private final PracticeActivityDao activityDao = new PracticeActivityDao();
+    private final ErrorPatternDao errorPatternDao = new ErrorPatternDao();
+    private final StudentDao studentDao = new StudentDao();
 
     private AnalyticsService() {}
 
@@ -17,38 +24,53 @@ public class AnalyticsService {
         return instance;
     }
 
-    public List<Assignment> getWeeklyAssignments(int educatorId) {
-        return assignDAO.findByEducatorAndWeek(educatorId, getMonday());
+    public List<PracticeActivity> getWeeklyActivities(int educatorId) {
+        return activityDao.findByEducatorId(educatorId);
     }
 
-    public void toggleAssignment(int id, boolean completed) {
-        assignDAO.setCompleted(id, completed);
+    public void toggleActivity(int id, boolean completed) {
+        activityDao.markCompleted(id, completed);
     }
 
-    public void addAssignment(Assignment a) {
-        assignDAO.insert(a);
+    public void addActivity(PracticeActivity a) {
+        activityDao.insert(a);
     }
 
-    /** Export CSV report of all students and their session data */
-    public String exportCsvReport(List<com.neuroflow.model.Student> students) throws IOException {
-        SessionService ss = SessionService.get();
+    public Map<String, Integer> getWeeklyErrorTotals() {
+        return errorPatternDao.weeklyTotals(getMonday());
+    }
+
+    public Map<String, Integer> getAllTimeErrorTotals() {
+        return errorPatternDao.allTimeTotals();
+    }
+
+    public int getActiveStudentCount() {
+        return studentDao.countActive();
+    }
+
+    public int getPracticedTodayCount() {
+        return studentDao.countPracticedToday();
+    }
+
+    public String exportCsvReport(List<Student> students) throws IOException {
+        PracticeSessionService ss = PracticeSessionService.get();
         File f = new File("NeuroFlow_Report_" + LocalDate.now() + ".csv");
         try (PrintWriter pw = new PrintWriter(new FileWriter(f))) {
             pw.println("Student,Progress%,Streak,Primary Issue,Trend,Sessions Today,Duration(s)");
-            for (com.neuroflow.model.Student s : students) {
-                int dur  = ss.sumDurationToday(s.getId());
-                int sess = ss.getTodaySessions(s.getId()).size();
+            for (Student s : students) {
+                int dur  = ss.sumDurationToday(s.getStudentId());
+                int sess = ss.getTodaySessions(s.getStudentId()).size();
                 pw.printf("%s,%d,%d,%s,%s,%d,%d%n",
-                    s.getName(), s.getWeeklyProgress(), s.getStreakDays(),
-                    s.getPrimaryIssue(), s.getTrend(), sess, dur);
+                        s.getName(), s.getWeeklyProgress(), s.getStreakDays(),
+                        s.getPrimaryIssue(), s.getTrend(), sess, dur);
             }
         }
         return f.getAbsolutePath();
     }
 
-    private LocalDate getMonday() {
+    private String getMonday() {
         LocalDate d = LocalDate.now();
         while (d.getDayOfWeek().getValue() != 1) d = d.minusDays(1);
-        return d;
+        return d.toString();
     }
 }

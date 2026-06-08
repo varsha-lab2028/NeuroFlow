@@ -1,3 +1,4 @@
+/*
 package com.neuroflow.ui.panels;
 
 import com.neuroflow.AppState;
@@ -136,3 +137,4 @@ public class LoginPanel extends JPanel implements ThemeManager.ThemeListener {
 
     @Override public void onThemeChanged() { repaint(); }
 }
+ */

@@ -4,7 +4,7 @@ import com.neuroflow.AppState;
 import com.neuroflow.model.PracticeSession;
 import com.neuroflow.model.Student;
 import com.neuroflow.service.MLService;
-import com.neuroflow.service.SessionService;
+import com.neuroflow.service.PracticeSessionService;
 import com.neuroflow.ui.MainFrame;
 import com.neuroflow.ui.components.CustomProgressBar;
 import com.neuroflow.ui.components.RoundedButton;
@@ -210,14 +210,14 @@ public class TryPanel extends BasePanel {
 
         Student st = AppState.get().getCurrentStudent();
         PracticeSession ps = new PracticeSession();
-        ps.setStudentId(st != null ? st.getId() : 1);
+        ps.setStudentId(st != null ? st.getStudentId() : 1);
         ps.setTargetLetter(letter); 
         ps.setDetectedLetter(res.detectedLetter);
         ps.setCorrect(res.isCorrect); 
         ps.setConfidence(res.confidence);
         ps.setAttempts(AppState.get().getSessionAttempts()); 
         ps.setDurationSeconds(dur);
-        SessionService.get().save(ps);
+        PracticeSessionService.get().save(ps);
 
         listening = false; 
         paperArea.repaint();

@@ -2,7 +2,7 @@ package com.neuroflow.ui.panels;
 
 import com.neuroflow.AppState;
 import com.neuroflow.model.Student;
-import com.neuroflow.service.SessionService;
+import com.neuroflow.service.PracticeSessionService;
 import com.neuroflow.ui.MainFrame;
 import com.neuroflow.ui.components.*;
 import com.neuroflow.ui.theme.ThemeManager;
@@ -42,13 +42,13 @@ public class HomePanel extends BasePanel {
 
         // Module tiles
         String[][] modules = {
-            {"✏️", "Literacy",       "Letters & reading",       "b, d, p, q  •  phonics",      "0x4E8FC5","21"},
-            {"🔢", "Numeracy",       "Numbers & counting",      "1–10  •  number shapes",       "0x3A9462","13"},
-            {"🧩", "Thinking Skills","Patterns & sequences",    "shapes  •  visual match",      "0x9B7ED4","12"},
+                {"✏️", "Literacy",       "Letters & reading",       "b, d, p, q  •  phonics",      "4E8FC5","21"},
+                {"🔢", "Numeracy",       "Numbers & counting",      "1–10  •  number shapes",       "3A9462","13"},
+                {"🧩", "Thinking Skills","Patterns & sequences",    "shapes  •  visual match",      "9B7ED4","12"},
         };
 
         for (String[] m : modules) {
-            Color iconBg = new Color(Integer.parseInt(m[4], 16) & 0xFFFFFF | 0x20000000, true);
+            Color iconBg = new Color(Integer.parseInt(m[4], 16) | 0x20000000, true);
             ModuleTile tile = new ModuleTile(m[0], m[1], m[2], m[3], iconBg);
             tile.setMaximumSize(new Dimension(Integer.MAX_VALUE, 82));
             tile.setPreferredSize(new Dimension(460, 82));
@@ -135,7 +135,7 @@ public class HomePanel extends BasePanel {
     }
 
     private String[] getPracticedLetters(Student s) {
-        List<com.neuroflow.model.PracticeSession> sessions = SessionService.get().getTodaySessions(s.getId());
+        List<com.neuroflow.model.PracticeSession> sessions = PracticeSessionService.get().getTodaySessions(s.getStudentId());
         return sessions.stream().map(ps -> ps.getTargetLetter()).distinct().toArray(String[]::new);
     }
 

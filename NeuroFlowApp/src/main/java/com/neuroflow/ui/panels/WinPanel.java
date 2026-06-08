@@ -2,7 +2,7 @@ package com.neuroflow.ui.panels;
 
 import com.neuroflow.AppState;
 import com.neuroflow.model.Student;
-import com.neuroflow.service.SessionService;
+import com.neuroflow.service.PracticeSessionService;
 import com.neuroflow.ui.MainFrame;
 import com.neuroflow.ui.components.RoundedButton;
 import com.neuroflow.ui.components.RoundedPanel;
@@ -116,9 +116,9 @@ public class WinPanel extends BasePanel {
         Student s = AppState.get().getCurrentStudent();
         if (s == null) { timeStat.setText("--"); triesStat.setText("--"); return; }
         
-        int dur = SessionService.get().sumDurationToday(s.getId());
-        int att = SessionService.get().countTodayAttempts(s.getId());
-        long lettersThisWeek = SessionService.get().getTodaySessions(s.getId()).stream()
+        int dur = PracticeSessionService.get().sumDurationToday(s.getStudentId());
+        int att = PracticeSessionService.get().countTodayAttempts(s.getStudentId());
+        long lettersThisWeek = PracticeSessionService.get().getTodaySessions(s.getStudentId()).stream()
                 .map(ps -> ps.getTargetLetter()).distinct().count();
                 
         timeStat.setText(formatDur(dur));

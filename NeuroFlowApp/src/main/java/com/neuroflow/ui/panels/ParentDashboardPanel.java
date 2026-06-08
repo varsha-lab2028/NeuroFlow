@@ -2,7 +2,7 @@ package com.neuroflow.ui.panels;
 
 import com.neuroflow.AppState;
 import com.neuroflow.model.Student;
-import com.neuroflow.service.SessionService;
+import com.neuroflow.service.PracticeSessionService;
 import com.neuroflow.ui.MainFrame;
 import com.neuroflow.ui.components.*;
 import com.neuroflow.ui.theme.ThemeManager;
@@ -10,7 +10,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
-import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
@@ -34,8 +33,8 @@ public class ParentDashboardPanel extends BasePanel {
 
         // Today's practice card
         if (s != null) {
-            int dur = SessionService.get().sumDurationToday(s.getId());
-            int att = SessionService.get().countTodayAttempts(s.getId());
+            int dur = PracticeSessionService.get().sumDurationToday(s.getStudentId());
+            int att = PracticeSessionService.get().countTodayAttempts(s.getStudentId());
             boolean hasPracticed = dur > 0 || att > 0;
 
             RoundedPanel todayCard = new RoundedPanel(18);
@@ -84,7 +83,7 @@ public class ParentDashboardPanel extends BasePanel {
         mixups.put("p / q", 30);
         
         if (s != null) {
-            Map<String, Integer> real = SessionService.get().weeklyErrorTotals();
+            Map<String, Integer> real = PracticeSessionService.get().weeklyErrorTotals();
             if (!real.isEmpty()) mixups.clear();
             real.forEach((k, v) -> { if (k.contains("reversal")) mixups.put(k.replace(" reversal", ""), v * 3); });
         }
