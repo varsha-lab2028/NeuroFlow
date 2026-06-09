@@ -2,6 +2,7 @@ package com.neuroflow.ui.panels;
 
 import com.neuroflow.AppState;
 import com.neuroflow.ui.MainFrame;
+import com.neuroflow.ui.ScreenUtils;
 import com.neuroflow.ui.components.RoundedButton;
 import com.neuroflow.ui.theme.ThemeManager;
 import javax.swing.*;
@@ -9,9 +10,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
-/**
- * Base class for all main panels. Provides top-bar, role-bar, scrollable content area.
- */
 public abstract class BasePanel extends JPanel implements ThemeManager.ThemeListener {
     protected final MainFrame frame;
     protected JPanel contentArea;
@@ -33,8 +31,8 @@ public abstract class BasePanel extends JPanel implements ThemeManager.ThemeList
                 g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
             }
         };
-        topBar.setOpaque(false); 
-        topBar.setPreferredSize(new Dimension(0, 52));
+        topBar.setOpaque(false);
+        topBar.setPreferredSize(new Dimension(0, ScreenUtils.topBarH(this)));
         topBar.setBorder(new EmptyBorder(0, 16, 0, 16));
 
         if (showBackButton && backTarget != null) {
@@ -77,7 +75,7 @@ public abstract class BasePanel extends JPanel implements ThemeManager.ThemeList
         contentArea = new JPanel();
         contentArea.setOpaque(false);
         contentArea.setLayout(new BoxLayout(contentArea, BoxLayout.Y_AXIS));
-        contentArea.setBorder(new EmptyBorder(16, 20, 28, 20));
+        contentArea.setBorder(new EmptyBorder(16, ScreenUtils.pad(this), 28, ScreenUtils.pad(this)));
 
         JScrollPane scroll = new JScrollPane(contentArea);
         scroll.setOpaque(false); 

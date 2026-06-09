@@ -4,10 +4,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Central theme manager. Holds all colours and fonts used across the app.
- * Components register as ThemeListeners to repaint when the theme changes.
- */
 public class ThemeManager {
 
     public interface ThemeListener {
@@ -21,6 +17,10 @@ public class ThemeManager {
         if (instance == null) instance = new ThemeManager();
         return instance;
     }
+
+    // ── OS detection — done once at startup ───────────────────────
+    private static final boolean IS_MAC = System.getProperty("os.name")
+            .toLowerCase().contains("mac");
 
     // ── Listeners ─────────────────────────────────────────────────
     private final List<ThemeListener> listeners = new ArrayList<>();
@@ -49,86 +49,85 @@ public class ThemeManager {
         notifyListeners();
     }
 
-    // ── Colour tokens (change with preset) ────────────────────────
+    // ── Colour tokens ─────────────────────────────────────────────
 
     public Color bg() {
         return switch (currentPreset) {
-            case SOFT_CREAM  -> new Color(0xF6F1E8);
-            case BLUE_MIST   -> new Color(0xEEF4FA);
-            case WARM_PAPER  -> new Color(0xF7EFE3);
-            case NIGHT       -> new Color(0x1E1E1E);
+            case SOFT_CREAM -> new Color(0xF6F1E8);
+            case BLUE_MIST  -> new Color(0xEEF4FA);
+            case WARM_PAPER -> new Color(0xF7EFE3);
+            case NIGHT      -> new Color(0x1E1E1E);
         };
     }
 
     public Color sf() {
         return switch (currentPreset) {
-            case SOFT_CREAM  -> new Color(0xFFFFFF);
-            case BLUE_MIST   -> new Color(0xFFFFFF);
-            case WARM_PAPER  -> new Color(0xFFF8EF);
-            case NIGHT       -> new Color(0x2A2A2A);
+            case SOFT_CREAM -> new Color(0xFFFFFF);
+            case BLUE_MIST  -> new Color(0xFFFFFF);
+            case WARM_PAPER -> new Color(0xFFF8EF);
+            case NIGHT      -> new Color(0x2A2A2A);
         };
     }
 
     public Color alt() {
         return switch (currentPreset) {
-            case SOFT_CREAM  -> new Color(0xEDE8DC);
-            case BLUE_MIST   -> new Color(0xE0EAF5);
-            case WARM_PAPER  -> new Color(0xEEE0CE);
-            case NIGHT       -> new Color(0x383838);
+            case SOFT_CREAM -> new Color(0xEDE8DC);
+            case BLUE_MIST  -> new Color(0xE0EAF5);
+            case WARM_PAPER -> new Color(0xEEE0CE);
+            case NIGHT      -> new Color(0x383838);
         };
     }
 
     public Color tx() {
         return switch (currentPreset) {
-            case SOFT_CREAM  -> new Color(0x1E1E1E);
-            case BLUE_MIST   -> new Color(0x1B1F24);
-            case WARM_PAPER  -> new Color(0x202020);
-            case NIGHT       -> new Color(0xE6E6E6);
+            case SOFT_CREAM -> new Color(0x1E1E1E);
+            case BLUE_MIST  -> new Color(0x1B1F24);
+            case WARM_PAPER -> new Color(0x202020);
+            case NIGHT      -> new Color(0xE6E6E6);
         };
     }
 
     public Color sub() {
         return switch (currentPreset) {
-            case SOFT_CREAM  -> new Color(0x666666);
-            case BLUE_MIST   -> new Color(0x4A5568);
-            case WARM_PAPER  -> new Color(0x6B4E3D);
-            case NIGHT       -> new Color(0xA8A8A8);
+            case SOFT_CREAM -> new Color(0x666666);
+            case BLUE_MIST  -> new Color(0x4A5568);
+            case WARM_PAPER -> new Color(0x6B4E3D);
+            case NIGHT      -> new Color(0xA8A8A8);
         };
     }
 
     public Color ac() {
         return switch (currentPreset) {
-            case SOFT_CREAM  -> new Color(0x4E8FC5);
-            case BLUE_MIST   -> new Color(0x5B8FB9);
-            case WARM_PAPER  -> new Color(0xC98F6B);
-            case NIGHT       -> new Color(0x7BA8F0);
+            case SOFT_CREAM -> new Color(0x4E8FC5);
+            case BLUE_MIST  -> new Color(0x5B8FB9);
+            case WARM_PAPER -> new Color(0xC98F6B);
+            case NIGHT      -> new Color(0x7BA8F0);
         };
     }
 
     public Color acl() {
         return switch (currentPreset) {
-            case SOFT_CREAM  -> new Color(0xD4E9F8);
-            case BLUE_MIST   -> new Color(0xC4DAF0);
-            case WARM_PAPER  -> new Color(0xF0D9C8);
-            case NIGHT       -> new Color(0x1A2D4C);
+            case SOFT_CREAM -> new Color(0xD4E9F8);
+            case BLUE_MIST  -> new Color(0xC4DAF0);
+            case WARM_PAPER -> new Color(0xF0D9C8);
+            case NIGHT      -> new Color(0x1A2D4C);
         };
     }
 
     public Color bd() {
-        return switch (currentPreset) {
-            case NIGHT -> new Color(255, 255, 255, 25);
-            default    -> new Color(0, 0, 0, 23);
-        };
+        return currentPreset == Preset.NIGHT
+                ? new Color(255, 255, 255, 25)
+                : new Color(0, 0, 0, 23);
     }
 
-    // ── Status colours (fixed across all themes) ──────────────────
+    // ── Status colours ────────────────────────────────────────────
 
-    public Color ok()   {
+    public Color ok() {
         return currentPreset == Preset.NIGHT
                 ? new Color(0x4DBB79) : new Color(0x3A9462);
     }
 
-    public Color er()   {
+    public Color er() {
         return currentPreset == Preset.NIGHT
                 ? new Color(0xF07550) : new Color(0xC85C3A);
     }
@@ -138,8 +137,8 @@ public class ThemeManager {
                 ? new Color(0xE09040) : new Color(0xD68B25);
     }
 
-    // ── Font size scaling ─────────────────────────────────────────
-    private float fontScale = 1.0f;  // 1.0 = medium, 0.85 = small, 1.25 = large
+    // ── Font scaling ──────────────────────────────────────────────
+    private float fontScale = 1.0f;
 
     public void setFontScale(float scale) {
         this.fontScale = scale;
@@ -149,34 +148,51 @@ public class ThemeManager {
     public float getFontScale() { return fontScale; }
 
     // ── Font helpers ──────────────────────────────────────────────
+    // On Mac, "Segoe UI" does not exist — fall back to system fonts
+    // that look equally clean on macOS (SF Pro via Dialog, or Helvetica Neue)
+
+    private String uiFont() {
+        return IS_MAC ? "Helvetica Neue" : "Segoe UI";
+    }
 
     public Font bold(int size) {
-        return new Font("Segoe UI", Font.BOLD, scaled(size));
+        return new Font(uiFont(), Font.BOLD, scaledSize(size));
     }
 
     public Font regular(int size) {
-        return new Font("Segoe UI", Font.PLAIN, scaled(size));
+        return new Font(uiFont(), Font.PLAIN, scaledSize(size));
     }
 
     public Font serif(int size) {
-        return new Font("Georgia", Font.BOLD, scaled(size));
+        return new Font("Georgia", Font.BOLD, scaledSize(size));
     }
 
-    private int scaled(int size) {
-        return Math.round(size * fontScale);
+    private int scaledSize(int base) {
+        return Math.round(base * fontScale);
+    }
+
+    // ── Emoji font — cross-platform ───────────────────────────────
+    /**
+     * Returns the correct emoji font for the current OS.
+     * "Apple Color Emoji" on Mac, "Segoe UI Emoji" on Windows.
+     * Use this everywhere an emoji needs to be drawn via Graphics2D.
+     */
+    public static Font emojiFont(int size) {
+        return IS_MAC
+                ? new Font("Apple Color Emoji", Font.PLAIN, size)
+                : new Font("Segoe UI Emoji",    Font.PLAIN, size);
     }
 
     // ── Utility ───────────────────────────────────────────────────
 
-    /**
-     * Returns a copy of the colour with a specific alpha (0–255).
-     */
     public Color withAlpha(Color c, int alpha) {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha);
     }
 
     // ── Reading mode ──────────────────────────────────────────────
-    public enum ReadingMode { DEFAULT, DYSLEXIA, ADHD_FOCUS, SENSORY, LOW_VISION }
+    public enum ReadingMode {
+        DEFAULT, DYSLEXIA, ADHD_FOCUS, SENSORY, LOW_VISION
+    }
 
     private ReadingMode readingMode = ReadingMode.DEFAULT;
 
@@ -184,13 +200,12 @@ public class ThemeManager {
 
     public void setReadingMode(ReadingMode mode) {
         this.readingMode = mode;
-        // Apply preset + font scale based on mode
         switch (mode) {
-            case DEFAULT       -> { setPreset(Preset.SOFT_CREAM); setFontScale(1.0f); }
-            case DYSLEXIA      -> { setPreset(Preset.WARM_PAPER); setFontScale(1.1f); }
-            case ADHD_FOCUS    -> { setPreset(Preset.BLUE_MIST);  setFontScale(1.0f); }
-            case SENSORY       -> { setPreset(Preset.NIGHT);       setFontScale(1.0f); }
-            case LOW_VISION    -> { setPreset(Preset.SOFT_CREAM);  setFontScale(1.3f); }
+            case DEFAULT    -> { setPreset(Preset.SOFT_CREAM); setFontScale(1.0f); }
+            case DYSLEXIA   -> { setPreset(Preset.WARM_PAPER); setFontScale(1.1f); }
+            case ADHD_FOCUS -> { setPreset(Preset.BLUE_MIST);  setFontScale(1.0f); }
+            case SENSORY    -> { setPreset(Preset.NIGHT);       setFontScale(1.0f); }
+            case LOW_VISION -> { setPreset(Preset.SOFT_CREAM);  setFontScale(1.3f); }
         }
         notifyListeners();
     }
@@ -200,16 +215,16 @@ public class ThemeManager {
 
     private HapticLevel hapticLevel = HapticLevel.MEDIUM;
 
-    public HapticLevel getHapticLevel() { return hapticLevel; }
-    public void setHapticLevel(HapticLevel level) { this.hapticLevel = level; }
+    public HapticLevel getHapticLevel()              { return hapticLevel; }
+    public void setHapticLevel(HapticLevel level)    { this.hapticLevel = level; }
 
     // ── Motion + sound toggles ────────────────────────────────────
     private boolean motionEnabled = true;
     private boolean soundEnabled  = true;
 
-    public boolean isMotionEnabled() { return motionEnabled; }
-    public void setMotionEnabled(boolean v) { motionEnabled = v; }
+    public boolean isMotionEnabled()             { return motionEnabled; }
+    public void setMotionEnabled(boolean v)      { motionEnabled = v; }
 
-    public boolean isSoundEnabled() { return soundEnabled; }
-    public void setSoundEnabled(boolean v) { soundEnabled = v; }
+    public boolean isSoundEnabled()              { return soundEnabled; }
+    public void setSoundEnabled(boolean v)       { soundEnabled = v; }
 }

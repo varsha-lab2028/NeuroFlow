@@ -22,6 +22,9 @@ public class MainFrame extends JFrame implements ThemeManager.ThemeListener {
     private CardLayout cardLayout;
     private JPanel cardContainer;
 
+    // Centre column — holds the actual panel, centred in the window
+    private JPanel centreColumn;
+
     private HomePanel             homePanel;
     private WatchPanel            watchPanel;
     private TryPanel              tryPanel;
@@ -39,21 +42,17 @@ public class MainFrame extends JFrame implements ThemeManager.ThemeListener {
         initAppState();
         initUI();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(440, 720));
-        setSize(460, 780);
+
+        // Start at phone-like size, centred
+        setSize(ScreenUtils.INIT_W, ScreenUtils.INIT_H);
         setLocationRelativeTo(null);
         setVisible(true);
     }
 
-    /**
-     * Load default demo data into AppState before any panel renders.
-     * Sets the first available student as the current student.
-     */
     private void initAppState() {
         AppState.get().setCurrentRole("child");
         try {
-            StudentService ss = StudentService.get();
-            List<Student> all = ss.getAllStudents();
+            List<Student> all = StudentService.get().getAllStudents();
             if (!all.isEmpty()) {
                 Student first = all.get(0);
                 AppState.get().setCurrentStudent(first);
@@ -64,19 +63,41 @@ public class MainFrame extends JFrame implements ThemeManager.ThemeListener {
                 AppState.get().setSelectedLetter("b");
             }
         } catch (Exception e) {
-            // DB not ready yet — panels will handle null student gracefully
             AppState.get().setSelectedLetter("b");
             System.out.println("[MainFrame] Could not load students: " + e.getMessage());
         }
     }
 
     private void initUI() {
-        cardLayout     = new CardLayout();
-        cardContainer  = new JPanel(cardLayout) {
+        // Root fills the whole window with background colour
+        JPanel root = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 g.setColor(ThemeManager.get().bg());
                 g.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        root.setOpaque(true);
+
+        // Card container — constrained width, centred by GridBagLayout
+        cardLayout    = new CardLayout();
+        cardContainer = new JPanel(cardLayout) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                g.setColor(ThemeManager.get().bg());
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                // Always phone-width at minimum, caps at 680 when maximised
+                int w = ScreenUtils.SCREEN_W;
+                return new Dimension(Math.min(680, Math.max(ScreenUtils.INIT_W, w / 3)), super.getPreferredSize().height);
+            }
+
+            @Override
+            public Dimension getMaximumSize() {
+                return new Dimension(680, Integer.MAX_VALUE);
             }
         };
         cardContainer.setOpaque(true);
@@ -90,7 +111,6 @@ public class MainFrame extends JFrame implements ThemeManager.ThemeListener {
         parentPanel   = new ParentDashboardPanel(this);
         educatorPanel = new EducatorPanel(this);
 
-        // Register panels with CardLayout
         cardContainer.add(homePanel,     HOME);
         cardContainer.add(watchPanel,    WATCH);
         cardContainer.add(tryPanel,      TRY);
@@ -99,14 +119,49 @@ public class MainFrame extends JFrame implements ThemeManager.ThemeListener {
         cardContainer.add(parentPanel,   PARENT);
         cardContainer.add(educatorPanel, EDUCATOR);
 
-        // Settings overlay sits on the glass pane
+        // GridBagConstraints centres the cardContainer vertically and horizontally
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.VERTICAL;  // stretch height only, not width
+        gbc.anchor = GridBagConstraints.CENTER;
+        root.add(cardContainer, gbc);
+
+        // Settings overlay as glass pane
         settingsOverlay = new SettingsOverlay(this);
         setGlassPane(settingsOverlay);
 
-        setContentPane(cardContainer);
-
-        // Start on Home — no login screen
+        setContentPane(root);
         cardLayout.show(cardContainer, HOME);
+    }
+
+    private void reflowCentreColumn() {
+        int winW = getWidth();
+        int maxContent = 680;
+
+        if (winW <= maxContent + 40) {
+            // Phone-like window — fill full width
+            centreColumn.setPreferredSize(null);
+            centreColumn.setMaximumSize(null);
+        } else {
+            // Wide window — cap at maxContent and centre
+            centreColumn.setPreferredSize(new Dimension(maxContent, getHeight()));
+            centreColumn.setMaximumSize(new Dimension(maxContent, Integer.MAX_VALUE));
+        }
+        revalidate();
+        repaint();
+    }
+
+    private void repaintAllPanels() {
+        homePanel.revalidate();     homePanel.repaint();
+        watchPanel.revalidate();    watchPanel.repaint();
+        tryPanel.revalidate();      tryPanel.repaint();
+        guidePanel.revalidate();    guidePanel.repaint();
+        winPanel.revalidate();      winPanel.repaint();
+        parentPanel.revalidate();   parentPanel.repaint();
+        educatorPanel.revalidate(); educatorPanel.repaint();
     }
 
     public void showPanel(String name) {
@@ -135,10 +190,6 @@ public class MainFrame extends JFrame implements ThemeManager.ThemeListener {
 
     public String getCurrentScreen() { return currentScreen; }
 
-    /**
-     * Called by the role switcher bar in BasePanel.
-     * Switches the visible dashboard and updates AppState.
-     */
     public void switchRole(String role) {
         AppState.get().setCurrentRole(role);
         switch (role) {

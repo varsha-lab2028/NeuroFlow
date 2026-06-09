@@ -4,8 +4,10 @@ import com.neuroflow.model.PracticeActivity;
 import com.neuroflow.model.Student;
 import com.neuroflow.service.AnalyticsService;
 import com.neuroflow.service.PracticeActivityService;
+import com.neuroflow.service.PracticeSessionService;
 import com.neuroflow.service.StudentService;
 import com.neuroflow.ui.MainFrame;
+import com.neuroflow.ui.ScreenUtils;
 import com.neuroflow.ui.components.*;
 import com.neuroflow.ui.theme.ThemeManager;
 import javax.swing.*;
@@ -21,7 +23,7 @@ public class EducatorPanel extends BasePanel {
     private JPanel tabContent;
     private String activeTab = "overview";
 
-    private final StudentService          studentService  = StudentService.get();
+    private final StudentService          studentService   = StudentService.get();
     private final AnalyticsService        analyticsService = AnalyticsService.get();
     private final PracticeActivityService activityService  = PracticeActivityService.get();
 
@@ -35,19 +37,22 @@ public class EducatorPanel extends BasePanel {
         contentArea.removeAll();
         ThemeManager tm = ThemeManager.get();
 
-        // Greeting
-        addFull(label("Class Overview 🎓", 20, true, tm.tx()));
-        addGap(4);
-        addFull(label("Here's how your students are doing", 13, false, tm.sub()));
-        addGap(14);
+        // ── Greeting ──────────────────────────────────────────────
+        addFull(label("Class Overview 🎓",
+                ScreenUtils.fontSize(this, 20), true, tm.tx()));
+        addGap(ScreenUtils.gap(this) / 3);
+        addFull(label("Here's how your students are doing",
+                ScreenUtils.fontSize(this, 13), false, tm.sub()));
+        addGap(ScreenUtils.gap(this));
 
-        // Tab bar
+        // ── Tab bar ───────────────────────────────────────────────
         tabBar = buildTabBar();
-        tabBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        tabBar.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(40, (int)(ScreenUtils.windowH(this) * 0.058))));
         addFull(tabBar);
-        addGap(14);
+        addGap(ScreenUtils.gap(this));
 
-        // Tab content area
+        // ── Tab content ───────────────────────────────────────────
         tabContent = new JPanel();
         tabContent.setOpaque(false);
         tabContent.setLayout(new BoxLayout(tabContent, BoxLayout.Y_AXIS));
@@ -61,6 +66,7 @@ public class EducatorPanel extends BasePanel {
     }
 
     // ── Tab bar ───────────────────────────────────────────────────
+
     private JPanel buildTabBar() {
         JPanel bar = new JPanel(new GridLayout(1, 3, 4, 0)) {
             @Override
@@ -77,37 +83,38 @@ public class EducatorPanel extends BasePanel {
         bar.setBorder(new EmptyBorder(4, 4, 4, 4));
         bar.setAlignmentX(LEFT_ALIGNMENT);
 
-        bar.add(buildTabBtn("Overview",   "overview"));
-        bar.add(buildTabBtn("This Week",  "thisweek"));
-        bar.add(buildTabBtn("Trends",     "trends"));
+        bar.add(buildTabBtn("Overview",  "overview"));
+        bar.add(buildTabBtn("This Week", "thisweek"));
+        bar.add(buildTabBtn("Trends",    "trends"));
         return bar;
     }
 
     private JButton buildTabBtn(String text, String tabKey) {
-        ThemeManager tm = ThemeManager.get();
         JButton btn = new JButton(text) {
             @Override
             protected void paintComponent(Graphics g) {
                 boolean active = tabKey.equals(activeTab);
-                Graphics2D g2 = (Graphics2D) g.create();
+                ThemeManager t = ThemeManager.get();
+                Graphics2D g2  = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_ON);
                 if (active) {
-                    g2.setColor(ThemeManager.get().sf());
+                    g2.setColor(t.sf());
                     g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
                 }
-                g2.setFont(getFont());
-                g2.setColor(active
-                        ? ThemeManager.get().tx()
-                        : ThemeManager.get().sub());
+                g2.setFont(active
+                        ? ThemeManager.get().bold(ScreenUtils.fontSize(this, 13))
+                        : ThemeManager.get().regular(ScreenUtils.fontSize(this, 13)));
+                g2.setColor(active ? t.tx() : t.sub());
                 FontMetrics fm = g2.getFontMetrics();
                 g2.drawString(getText(),
-                        (getWidth() - fm.stringWidth(getText())) / 2,
+                        (getWidth()  - fm.stringWidth(getText())) / 2,
                         (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
                 g2.dispose();
             }
         };
-        btn.setFont(tabKey.equals(activeTab) ? tm.bold(13) : tm.regular(13));
+        btn.setFont(ThemeManager.get().regular(
+                ScreenUtils.fontSize(this, 13)));
         btn.setOpaque(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
@@ -124,20 +131,12 @@ public class EducatorPanel extends BasePanel {
     private void showTab(String tab) {
         tabContent.removeAll();
         switch (tab) {
-            case "overview"  -> buildOverviewTab();
-            case "thisweek"  -> buildThisWeekTab();
-            case "trends"    -> buildTrendsTab();
+            case "overview" -> buildOverviewTab();
+            case "thisweek" -> buildThisWeekTab();
+            case "trends"   -> buildTrendsTab();
         }
-        // Rebuild tab bar so active highlight updates
-        int idx = switch (tab) {
-            case "overview" -> 0;
-            case "thisweek" -> 1;
-            default         -> 2;
-        };
-        if (tabBar != null) {
-            Component[] btns = tabBar.getComponents();
-            for (Component c : btns) c.repaint();
-        }
+        if (tabBar != null)
+            for (Component c : tabBar.getComponents()) c.repaint();
         tabContent.revalidate();
         tabContent.repaint();
     }
@@ -147,43 +146,55 @@ public class EducatorPanel extends BasePanel {
     private void buildOverviewTab() {
         ThemeManager tm = ThemeManager.get();
 
-        // Summary stat cards
         int activeCount    = analyticsService.getActiveStudentCount();
         int practicedToday = analyticsService.getPracticedTodayCount();
         Map<String, Integer> errors = analyticsService.getAllTimeErrorTotals();
         String topMixup = errors.isEmpty() ? "b/d reversal"
                 : errors.entrySet().iterator().next().getKey();
 
-        JPanel statGrid = new JPanel(new GridLayout(1, 3, 10, 0));
+        // Stat cards row
+        int statH   = Math.max(80, (int)(ScreenUtils.windowH(this) * 0.112));
+        int statGap = Math.max(8, (int)(ScreenUtils.windowW(this) * 0.018));
+
+        JPanel statGrid = new JPanel(new GridLayout(1, 3, statGap, 0));
         statGrid.setOpaque(false);
-        statGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, 88));
+        statGrid.setMaximumSize(new Dimension(Integer.MAX_VALUE, statH));
         statGrid.setAlignmentX(LEFT_ALIGNMENT);
 
-        statGrid.add(buildStatCard(String.valueOf(activeCount), "Active students",  tm.ac()));
-        statGrid.add(buildStatCard(String.valueOf(practicedToday), "Practised today", tm.ok()));
-        statGrid.add(buildStatCard(topMixup, "Common mix-up", tm.warn()));
+        statGrid.add(buildStatCard(
+                String.valueOf(activeCount), "Active students",  tm.ac()));
+        statGrid.add(buildStatCard(
+                String.valueOf(practicedToday), "Practised today", tm.ok()));
+        statGrid.add(buildStatCard(
+                topMixup, "Common mix-up", tm.warn()));
 
         tabContent.add(statGrid);
-        tabContent.add(Box.createVerticalStrut(14));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
-        // Student progress list
-        JLabel listTitle = label("Student Progress", 15, true, tm.tx());
+        // Student list heading
+        JLabel listTitle = label("Student Progress",
+                ScreenUtils.fontSize(this, 15), true, tm.tx());
         listTitle.setAlignmentX(LEFT_ALIGNMENT);
         tabContent.add(listTitle);
-        tabContent.add(Box.createVerticalStrut(10));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
         List<Student> students = studentService.getAllStudents();
         if (students.isEmpty()) {
-            JLabel empty = label("No students found. Check seed data.", 13, false, tm.sub());
+            JLabel empty = label(
+                    "No students found. Check seed data.",
+                    ScreenUtils.fontSize(this, 13), false, tm.sub());
             empty.setAlignmentX(LEFT_ALIGNMENT);
             tabContent.add(empty);
         } else {
             for (Student s : students) {
                 StudentRowPanel row = new StudentRowPanel(s);
-                row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 88));
+                // StudentRowPanel.getPreferredSize() handles its own height
+                row.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                        Math.max(80, (int)(ScreenUtils.windowH(this) * 0.11))));
                 row.setAlignmentX(LEFT_ALIGNMENT);
                 tabContent.add(row);
-                tabContent.add(Box.createVerticalStrut(8));
+                tabContent.add(Box.createVerticalStrut(
+                        ScreenUtils.gap(this) / 2));
             }
         }
     }
@@ -193,55 +204,55 @@ public class EducatorPanel extends BasePanel {
     private void buildThisWeekTab() {
         ThemeManager tm = ThemeManager.get();
 
-        // Classroom focus section
-        JLabel focusTitle = label("📌 Classroom Focus", 15, true, tm.tx());
+        JLabel focusTitle = label("📌 Classroom Focus",
+                ScreenUtils.fontSize(this, 15), true, tm.tx());
         focusTitle.setAlignmentX(LEFT_ALIGNMENT);
         tabContent.add(focusTitle);
-        tabContent.add(Box.createVerticalStrut(4));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this) / 3));
 
         JLabel focusSub = label(
                 "Gentle practice suggestions for this week — not homework",
-                12, false, tm.sub());
+                ScreenUtils.fontSize(this, 12), false, tm.sub());
         focusSub.setAlignmentX(LEFT_ALIGNMENT);
         tabContent.add(focusSub);
-        tabContent.add(Box.createVerticalStrut(10));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
-        List<PracticeActivity> activities = activityService.getActivitiesForThisWeek();
+        List<PracticeActivity> activities =
+                activityService.getActivitiesForThisWeek();
 
         if (activities.isEmpty()) {
-            // Show a placeholder card if no activities yet
             tabContent.add(buildEmptyActivityCard());
         } else {
             for (PracticeActivity a : activities) {
                 tabContent.add(buildActivityCard(a));
-                tabContent.add(Box.createVerticalStrut(10));
+                tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
             }
         }
 
-        tabContent.add(Box.createVerticalStrut(16));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
-        // Share with parents button
+        // Share button
         RoundedButton shareBtn = new RoundedButton(
                 "📤  Share focus with parents", RoundedButton.Style.PRIMARY);
-        shareBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        shareBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                ScreenUtils.buttonH(this)));
         shareBtn.setAlignmentX(LEFT_ALIGNMENT);
         shareBtn.addActionListener(e -> {
-            List<PracticeActivity> all = activityService.getAll();
-            for (PracticeActivity a : all) {
+            for (PracticeActivity a : activityService.getAll())
                 activityService.shareWithParents(a.getId(), true);
-            }
             JOptionPane.showMessageDialog(this,
                     "Classroom focus shared with parents ✓",
                     "Shared", JOptionPane.INFORMATION_MESSAGE);
         });
         tabContent.add(shareBtn);
-        tabContent.add(Box.createVerticalStrut(14));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
-        // Optional ideas for parents
-        JLabel ideasTitle = label("💡 Optional ideas for parents", 15, true, tm.tx());
+        // Ideas for parents
+        JLabel ideasTitle = label("💡 Optional ideas for parents",
+                ScreenUtils.fontSize(this, 15), true, tm.tx());
         ideasTitle.setAlignmentX(LEFT_ALIGNMENT);
         tabContent.add(ideasTitle);
-        tabContent.add(Box.createVerticalStrut(10));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
         String[] ideas = {
                 "Ask \"which way does the bump go?\" during reading time",
@@ -249,10 +260,9 @@ public class EducatorPanel extends BasePanel {
                 "Celebrate the effort of practising, not just correct answers",
                 "Keep sessions short — 5 minutes of focus is plenty at this age"
         };
-
         for (String idea : ideas) {
             tabContent.add(buildIdeaRow(idea));
-            tabContent.add(Box.createVerticalStrut(8));
+            tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this) / 2));
         }
     }
 
@@ -261,52 +271,55 @@ public class EducatorPanel extends BasePanel {
     private void buildTrendsTab() {
         ThemeManager tm = ThemeManager.get();
 
-        // Error pattern counts
-        JLabel errTitle = label("📊 Common error patterns", 15, true, tm.tx());
+        JLabel errTitle = label("📊 Common error patterns",
+                ScreenUtils.fontSize(this, 15), true, tm.tx());
         errTitle.setAlignmentX(LEFT_ALIGNMENT);
         tabContent.add(errTitle);
-        tabContent.add(Box.createVerticalStrut(10));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
         Map<String, Integer> errors = analyticsService.getAllTimeErrorTotals();
 
         if (errors.isEmpty()) {
-            JLabel none = label("No error data yet — practice sessions will populate this.",
-                    13, false, tm.sub());
+            JLabel none = label(
+                    "No error data yet — practice sessions will populate this.",
+                    ScreenUtils.fontSize(this, 13), false, tm.sub());
             none.setAlignmentX(LEFT_ALIGNMENT);
             tabContent.add(none);
         } else {
-            int maxVal = errors.values().stream().mapToInt(i -> i).max().orElse(1);
+            int maxVal = errors.values().stream()
+                    .mapToInt(i -> i).max().orElse(1);
             for (Map.Entry<String, Integer> entry : errors.entrySet()) {
-                tabContent.add(buildErrorRow(entry.getKey(), entry.getValue(), maxVal));
-                tabContent.add(Box.createVerticalStrut(10));
+                tabContent.add(buildErrorRow(
+                        entry.getKey(), entry.getValue(), maxVal));
+                tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
             }
         }
 
-        tabContent.add(Box.createVerticalStrut(16));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
-        // Weekly practice chart
-        JLabel chartTitle = label("📅 Practice days this week", 15, true, tm.tx());
+        JLabel chartTitle = label("📅 Practice days this week",
+                ScreenUtils.fontSize(this, 15), true, tm.tx());
         chartTitle.setAlignmentX(LEFT_ALIGNMENT);
         tabContent.add(chartTitle);
-        tabContent.add(Box.createVerticalStrut(10));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
         // Aggregate weekly days across all students
         List<Student> students = studentService.getAllStudents();
         int[] combined = new int[7];
         for (Student s : students) {
-            int[] days = com.neuroflow.service.PracticeSessionService.get()
+            int[] days = PracticeSessionService.get()
                     .weeklyPracticeDays(s.getStudentId());
             for (int i = 0; i < 7; i++) combined[i] += days[i];
         }
 
         BarChartPanel chart = new BarChartPanel();
         chart.setValues(combined);
-        chart.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        chart.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(90, (int)(ScreenUtils.windowH(this) * 0.13))));
         chart.setAlignmentX(LEFT_ALIGNMENT);
         tabContent.add(chart);
-        tabContent.add(Box.createVerticalStrut(16));
+        tabContent.add(Box.createVerticalStrut(ScreenUtils.gap(this)));
 
-        // Insight message
         tabContent.add(buildInsightCard(errors));
     }
 
@@ -314,6 +327,8 @@ public class EducatorPanel extends BasePanel {
 
     private JPanel buildStatCard(String value, String sublabel, Color accent) {
         ThemeManager tm = ThemeManager.get();
+        int cp = ScreenUtils.cardPad(this);
+
         JPanel card = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -321,77 +336,87 @@ public class EducatorPanel extends BasePanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(tm.sf());
-                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
+                g2.fill(new RoundRectangle2D.Float(
+                        0, 0, getWidth(), getHeight(), 14, 14));
                 g2.setColor(tm.bd());
                 g2.setStroke(new BasicStroke(1f));
-                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f,
-                        getWidth() - 1, getHeight() - 1, 14, 14));
-                // Accent top bar
+                g2.draw(new RoundRectangle2D.Float(
+                        0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 14, 14));
+                // Accent top bar scales with component height
+                int barH = Math.max(4, getHeight() / 16);
                 g2.setColor(accent);
-                g2.fillRoundRect(0, 0, getWidth(), 4, 4, 4);
+                g2.fillRoundRect(0, 0, getWidth(), barH, 4, 4);
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
         card.setOpaque(false);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(new EmptyBorder(14, 10, 10, 10));
+        card.setBorder(new EmptyBorder(cp + 4, cp, cp, cp));
 
+        // Value font — shorter text gets bigger font
+        int valSize = value.length() > 6
+                ? ScreenUtils.fontSize(this, 12)
+                : ScreenUtils.fontSize(this, 20);
         JLabel valLbl = new JLabel(value, SwingConstants.CENTER);
-        valLbl.setFont(tm.bold(value.length() > 6 ? 12 : 20));
+        valLbl.setFont(tm.bold(valSize));
         valLbl.setForeground(tm.tx());
         valLbl.setAlignmentX(CENTER_ALIGNMENT);
 
         JLabel subLbl = new JLabel(
                 "<html><center>" + sublabel + "</center></html>",
                 SwingConstants.CENTER);
-        subLbl.setFont(tm.regular(10));
+        subLbl.setFont(tm.regular(ScreenUtils.fontSize(this, 10)));
         subLbl.setForeground(tm.sub());
         subLbl.setAlignmentX(CENTER_ALIGNMENT);
 
         card.add(valLbl);
-        card.add(Box.createVerticalStrut(4));
+        card.add(Box.createVerticalStrut(
+                Math.max(3, (int)(ScreenUtils.windowH(this) * 0.005))));
         card.add(subLbl);
         return card;
     }
 
     private JPanel buildActivityCard(PracticeActivity a) {
         ThemeManager tm = ThemeManager.get();
+        int cp = ScreenUtils.cardPad(this);
+
         RoundedPanel card = new RoundedPanel(14);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(new EmptyBorder(12, 14, 12, 14));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        card.setBorder(new EmptyBorder(cp, cp, cp, cp));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(90, (int)(ScreenUtils.windowH(this) * 0.132))));
         card.setAlignmentX(LEFT_ALIGNMENT);
 
         JPanel topRow = new JPanel(new BorderLayout());
         topRow.setOpaque(false);
-
-        JLabel titleLbl = label(a.getTitle(), 14, true, tm.tx());
-        topRow.add(titleLbl, BorderLayout.WEST);
-
-        BadgeLabel badge = new BadgeLabel(
-                a.isCompleted() ? "Done" : "In progress",
-                a.isCompleted()
-                        ? BadgeLabel.BadgeType.OK
-                        : BadgeLabel.BadgeType.ACCENT);
-        topRow.add(badge, BorderLayout.EAST);
+        topRow.add(label(a.getTitle(),
+                        ScreenUtils.fontSize(this, 14), true, tm.tx()),
+                BorderLayout.WEST);
+        topRow.add(new BadgeLabel(
+                        a.isCompleted() ? "Done" : "In progress",
+                        a.isCompleted()
+                                ? BadgeLabel.BadgeType.OK
+                                : BadgeLabel.BadgeType.ACCENT),
+                BorderLayout.EAST);
         card.add(topRow);
-        card.add(Box.createVerticalStrut(6));
+        card.add(Box.createVerticalStrut(ScreenUtils.gap(this) / 2));
 
         if (a.getDescription() != null && !a.getDescription().isBlank()) {
-            JLabel desc = label(a.getDescription(), 12, false, tm.sub());
+            JLabel desc = label(a.getDescription(),
+                    ScreenUtils.fontSize(this, 12), false, tm.sub());
             desc.setAlignmentX(LEFT_ALIGNMENT);
             card.add(desc);
-            card.add(Box.createVerticalStrut(8));
+            card.add(Box.createVerticalStrut(ScreenUtils.gap(this) / 2));
         }
 
-        // Mark complete toggle
         RoundedButton doneBtn = new RoundedButton(
                 a.isCompleted() ? "✓ Completed" : "Mark complete",
                 a.isCompleted()
                         ? RoundedButton.Style.MUTED
                         : RoundedButton.Style.PRIMARY);
-        doneBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        doneBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(34, (int)(ScreenUtils.buttonH(this) * 0.72))));
         doneBtn.setAlignmentX(LEFT_ALIGNMENT);
         doneBtn.addActionListener(e -> {
             activityService.markCompleted(a.getId(), !a.isCompleted());
@@ -403,26 +428,31 @@ public class EducatorPanel extends BasePanel {
 
     private JPanel buildEmptyActivityCard() {
         ThemeManager tm = ThemeManager.get();
+        int cp = ScreenUtils.cardPad(this);
+
         RoundedPanel card = new RoundedPanel(14);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(new EmptyBorder(16, 16, 16, 16));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        card.setBorder(new EmptyBorder(cp, cp, cp, cp));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(90, (int)(ScreenUtils.windowH(this) * 0.132))));
         card.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel title = label("📌 Letters b & d", 14, true, tm.tx());
+        JLabel title = label("📌 Letters b & d",
+                ScreenUtils.fontSize(this, 14), true, tm.tx());
         title.setAlignmentX(LEFT_ALIGNMENT);
         card.add(title);
-        card.add(Box.createVerticalStrut(6));
+        card.add(Box.createVerticalStrut(ScreenUtils.gap(this) / 2));
 
         JLabel desc = label(
                 "Visual discrimination — bump direction awareness",
-                12, false, tm.sub());
+                ScreenUtils.fontSize(this, 12), false, tm.sub());
         desc.setAlignmentX(LEFT_ALIGNMENT);
         card.add(desc);
-        card.add(Box.createVerticalStrut(6));
+        card.add(Box.createVerticalStrut(ScreenUtils.gap(this) / 2));
 
-        JLabel hint = label("Add activities via seed data or the service layer.",
-                11, false, tm.sub());
+        JLabel hint = label(
+                "Add activities via seed data or the service layer.",
+                ScreenUtils.fontSize(this, 11), false, tm.sub());
         hint.setAlignmentX(LEFT_ALIGNMENT);
         card.add(hint);
         return card;
@@ -430,52 +460,66 @@ public class EducatorPanel extends BasePanel {
 
     private JPanel buildErrorRow(String errorType, int count, int maxVal) {
         ThemeManager tm = ThemeManager.get();
+
         JPanel row = new JPanel();
         row.setOpaque(false);
         row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
         row.setAlignmentX(LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(44, (int)(ScreenUtils.windowH(this) * 0.066))));
 
         JPanel topRow = new JPanel(new BorderLayout());
         topRow.setOpaque(false);
-        topRow.add(label(errorType, 13, true, tm.tx()), BorderLayout.WEST);
-        topRow.add(label(count + " times", 11, false, tm.sub()), BorderLayout.EAST);
+        topRow.add(label(errorType,
+                        ScreenUtils.fontSize(this, 13), true, tm.tx()),
+                BorderLayout.WEST);
+        topRow.add(label(count + " times",
+                        ScreenUtils.fontSize(this, 11), false, tm.sub()),
+                BorderLayout.EAST);
         row.add(topRow);
-        row.add(Box.createVerticalStrut(5));
+        row.add(Box.createVerticalStrut(
+                Math.max(4, (int)(ScreenUtils.windowH(this) * 0.006))));
 
         CustomProgressBar bar = new CustomProgressBar();
-        bar.setValue((int) (100.0 * count / maxVal));
-        bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 8));
+        bar.setValue((int)(100.0 * count / maxVal));
+        bar.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(7, (int)(ScreenUtils.windowH(this) * 0.010))));
         bar.setAlignmentX(LEFT_ALIGNMENT);
-
-        Color barColor = count == maxVal ? tm.er()
+        bar.setFillColor(count == maxVal ? tm.er()
                 : count > maxVal / 2    ? tm.warn()
-                : tm.ac();
-        bar.setFillColor(barColor);
+                : tm.ac());
         row.add(bar);
         return row;
     }
 
     private JPanel buildIdeaRow(String text) {
         ThemeManager tm = ThemeManager.get();
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        int rowGap = Math.max(6, (int)(ScreenUtils.windowW(this) * 0.016));
+
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, rowGap, 4));
         row.setOpaque(false);
         row.setAlignmentX(LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(40, (int)(ScreenUtils.windowH(this) * 0.058))));
 
         JLabel dot = new JLabel("•");
-        dot.setFont(tm.bold(16));
+        dot.setFont(tm.bold(ScreenUtils.fontSize(this, 16)));
         dot.setForeground(tm.ac());
         row.add(dot);
 
-        JLabel txt = label(text, 13, false, tm.tx());
-        txt.setPreferredSize(new Dimension(360, 32));
+        JLabel txt = label(text, ScreenUtils.fontSize(this, 13),
+                false, tm.tx());
+        txt.setPreferredSize(new Dimension(
+                ScreenUtils.contentW(this) - rowGap * 3 - 20,
+                Math.max(28, (int)(ScreenUtils.windowH(this) * 0.038))));
         row.add(txt);
         return row;
     }
 
     private JPanel buildInsightCard(Map<String, Integer> errors) {
         ThemeManager tm = ThemeManager.get();
+        int cp = ScreenUtils.cardPad(this);
+
         JPanel card = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -483,34 +527,35 @@ public class EducatorPanel extends BasePanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(tm.withAlpha(tm.ac(), 18));
-                g2.fill(new RoundRectangle2D.Float(0, 0,
-                        getWidth(), getHeight(), 14, 14));
+                g2.fill(new RoundRectangle2D.Float(
+                        0, 0, getWidth(), getHeight(), 14, 14));
                 g2.setColor(tm.withAlpha(tm.ac(), 55));
                 g2.setStroke(new BasicStroke(1.5f));
-                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f,
-                        getWidth() - 1, getHeight() - 1, 14, 14));
+                g2.draw(new RoundRectangle2D.Float(
+                        0.5f, 0.5f, getWidth() - 1, getHeight() - 1, 14, 14));
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
         card.setOpaque(false);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(new EmptyBorder(14, 16, 14, 16));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        card.setBorder(new EmptyBorder(cp, cp, cp, cp));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE,
+                Math.max(80, (int)(ScreenUtils.windowH(this) * 0.118))));
         card.setAlignmentX(LEFT_ALIGNMENT);
 
-        String insight;
-        if (errors.isEmpty()) {
-            insight = "No trends yet — practice sessions will reveal patterns here.";
-        } else {
-            String top = errors.entrySet().iterator().next().getKey();
-            insight = "💡 Most students are struggling with " + top
-                    + ". Consider a group activity focusing on bump direction this week.";
-        }
+        String insight = errors.isEmpty()
+                ? "No trends yet — practice sessions will reveal patterns here."
+                : "💡 Most students are struggling with "
+                + errors.entrySet().iterator().next().getKey()
+                + ". Consider a group activity focusing on bump direction this week.";
 
+        // Width drives text wrapping — uses content width
+        int wrapW = ScreenUtils.contentW(this) - cp * 2;
         JLabel insightLbl = new JLabel(
-                "<html><body style='width:340px'>" + insight + "</body></html>");
-        insightLbl.setFont(tm.regular(13));
+                "<html><body style='width:" + wrapW + "px'>"
+                        + insight + "</body></html>");
+        insightLbl.setFont(tm.regular(ScreenUtils.fontSize(this, 13)));
         insightLbl.setForeground(tm.tx());
         insightLbl.setAlignmentX(LEFT_ALIGNMENT);
         card.add(insightLbl);
