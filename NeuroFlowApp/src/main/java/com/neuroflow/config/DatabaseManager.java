@@ -96,6 +96,15 @@ public class DatabaseManager {
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             )""");
+        //none events table
+        st.execute("""
+            CREATE TABLE IF NOT EXISTS none_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                student_id INTEGER REFERENCES students(id),
+                event_date TEXT NOT NULL,
+                count INTEGER DEFAULT 1,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )""");
         st.close();
     }
 
