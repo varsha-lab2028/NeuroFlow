@@ -30,8 +30,8 @@ public class PracticeController {
 
     /**
      * POST /api/practice/classify
-     * Simulates ML classification of a letter stroke.
-     * Body: { "targetLetter": "b", "studentId": 1 }
+     * ML classification of a digit or letter stroke.
+     * Body: { "targetLetter": "3", "studentId": 1 }  ← digit (0-9) or letter (b/d/p/q)
      * Returns: { "detectedLetter", "isCorrect", "confidence", "buzz", "simulated" }
      */
     @PostMapping("/classify")
@@ -132,7 +132,6 @@ public class PracticeController {
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
-
     private Map<String, Object> simulateClassify(String targetLetter) {
         Random rnd = new Random();
         String detected;
@@ -141,8 +140,25 @@ public class PracticeController {
             detected   = targetLetter;
             confidence = 0.88 + rnd.nextDouble() * 0.12;
         } else {
-            Map<String, String> confusions = Map.of("b","d","d","b","p","q","q","p");
-            detected   = confusions.getOrDefault(targetLetter, "b");
+            // Digit confusion pairs (visually similar numbers)
+            Map<String, String> digitConfusions = Map.of(
+                    "0","6",  "6","0",
+                    "1","7",  "7","1",
+                    "3","8",  "8","3",
+                    "9","4"
+            );
+            // Letter confusion pairs (kept for literacy module)
+            Map<String, String> letterConfusions = Map.of("b","d","d","b","p","q","q","p");
+            if (digitConfusions.containsKey(targetLetter)) {
+                detected = digitConfusions.get(targetLetter);
+            } else if (letterConfusions.containsKey(targetLetter)) {
+                detected = letterConfusions.get(targetLetter);
+            } else {
+                // Fallback: pick a random neighbouring digit
+                int base = 0;
+                try { base = Integer.parseInt(targetLetter); } catch (NumberFormatException ignored) {}
+                detected = String.valueOf((base + 1) % 10);
+            }
             confidence = 0.78 + rnd.nextDouble() * 0.18;
         }
         boolean correct = detected.equals(targetLetter);
@@ -156,12 +172,6 @@ public class PracticeController {
     }
 
     private String resolveErrorType(String target, String detected) {
-        boolean group1 = (target.equals("b") || target.equals("d"))
-                      && (detected.equals("b") || detected.equals("d"));
-        boolean group2 = (target.equals("p") || target.equals("q"))
-                      && (detected.equals("p") || detected.equals("q"));
-        if (group1) return "b/d reversal";
-        if (group2) return "p/q reversal";
-        return "stroke direction";
+        return "digit confusion (" + target + "→" + detected + ")";
     }
 }
