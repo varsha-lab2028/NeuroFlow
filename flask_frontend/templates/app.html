@@ -1,0 +1,2412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroFlow</title>
+<style>
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#C8C2B8;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:28px 16px;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+
+/* ---------- DEVICE ---------- */
+.device{width:390px;min-height:740px;background:var(--bg);border-radius:44px;box-shadow:0 24px 72px rgba(0,0,0,0.28),0 4px 16px rgba(0,0,0,0.12),inset 0 0 0 1.5px rgba(255,255,255,0.18);overflow:hidden;position:relative}
+
+/* ---------- THEMES ---------- */
+:root{--bg:#F6F1E8;--sf:#FFFFFF;--alt:#EDE8DC;--tx:#1E1E1E;--sub:#666666;--ac:#4E8FC5;--acl:#D4E9F8;--ok:#3A9462;--er:#C85C3A;--warn:#D68B25;--bd:rgba(0,0,0,0.09)}
+.t-blue{--bg:#EEF4FA;--sf:#FFFFFF;--alt:#E0EAF5;--tx:#1B1F24;--sub:#4A5568;--ac:#5B8FB9;--acl:#C4DAF0;--ok:#3A9462;--er:#C85C3A;--warn:#D68B25;--bd:rgba(0,0,0,0.09)}
+.t-warm{--bg:#F7EFE3;--sf:#FFF8EF;--alt:#EEE0CE;--tx:#202020;--sub:#6B4E3D;--ac:#C98F6B;--acl:#F0D9C8;--ok:#3A9462;--er:#C85C3A;--warn:#D68B25;--bd:rgba(0,0,0,0.09)}
+.t-dark{--bg:#1E1E1E;--sf:#2A2A2A;--alt:#383838;--tx:#E6E6E6;--sub:#A8A8A8;--ac:#7BA8F0;--acl:#1A2D4C;--ok:#4DBB79;--er:#F07550;--warn:#E09040;--bd:rgba(255,255,255,0.1)}
+
+/* ---------- SCREENS ---------- */
+.screen{display:none;background:var(--bg);min-height:740px;animation:slideIn .22s ease}
+.screen.active{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ---------- TOPBAR ---------- */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10}
+.top-bar .title{font-weight:700;font-size:16px;color:var(--tx)}
+.btn-back{background:none;border:none;cursor:pointer;color:var(--ac);font-weight:700;font-size:14px;padding:0;min-width:60px}
+.btn-cog{background:none;border:none;cursor:pointer;font-size:22px;padding:0;min-width:60px;text-align:right;color:var(--sub)}
+
+/* ---------- ROLE BAR ---------- */
+.role-bar{display:flex;background:var(--alt);border-radius:12px;padding:4px;margin:14px 20px 0}
+.role-btn{flex:1;background:transparent;border:none;border-radius:9px;padding:8px 4px;cursor:pointer;font-weight:400;font-size:12px;color:var(--sub);transition:all .2s}
+.role-btn.on{background:var(--sf);color:var(--tx);font-weight:700}
+
+/* ---------- CONTENT ---------- */
+.content{padding:18px 20px 28px}
+
+/* ---------- CARDS ---------- */
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:18px 20px;margin-bottom:14px}
+
+/* ---------- BUTTONS ---------- */
+.btn{display:block;width:100%;padding:15px 24px;border:none;border-radius:14px;cursor:pointer;font-weight:700;font-size:15px;text-align:center;margin-bottom:10px;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-ac{background:var(--ac);color:#fff}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-ghost{background:transparent;border:1.5px solid var(--bd);color:var(--tx)}
+.btn-ghost:hover{background:var(--alt)}
+.btn-muted{background:var(--alt);color:var(--tx)}
+
+/* ---------- MODULE TILES ---------- */
+.module-tile{display:flex;align-items:center;gap:16px;background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:18px 20px;cursor:pointer;margin-bottom:12px;transition:transform .15s,box-shadow .15s;text-align:left;width:100%}
+.module-tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.m-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.m-arrow{color:var(--sub);font-size:20px;margin-left:auto;flex-shrink:0}
+
+/* ---------- PROGRESS BAR ---------- */
+.prog-track{height:8px;background:var(--alt);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:var(--ac);border-radius:4px;transition:width .4s}
+
+/* ---------- BADGES ---------- */
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px}
+.b-ok{background:rgba(58,148,98,.14);color:var(--ok)}
+.b-warn{background:rgba(214,139,37,.14);color:var(--warn)}
+.b-er{background:rgba(200,92,58,.14);color:var(--er)}
+.b-ac{background:var(--acl);color:var(--ac)}
+
+/* ---------- TOGGLE ---------- */
+.toggle{width:50px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--ok)}
+.toggle.off{background:var(--alt)}
+.toggle-knob{width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.22)}
+.toggle.on .toggle-knob{left:25px}
+.toggle.off .toggle-knob{left:3px}
+
+/* ---------- SETTINGS OVERLAY ---------- */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center;animation:fadeBg .2s}
+.overlay.show{display:flex}
+@keyframes fadeBg{from{opacity:0}to{opacity:1}}
+.overlay-panel{background:var(--sf);border-radius:24px 24px 0 0;padding:24px;width:390px;max-height:88vh;overflow-y:auto;animation:panelUp .22s ease}
+@keyframes panelUp{from{transform:translateY(24px)}to{transform:none}}
+
+/* ---------- THEME PICKER ---------- */
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.theme-opt{border-radius:12px;padding:12px;cursor:pointer;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500;transition:all .15s;border:2.5px solid transparent}
+.theme-opt.sel{font-weight:700}
+.theme-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0}
+
+/* ---------- SIZE BUTTONS ---------- */
+.size-row{display:flex;gap:8px;margin-bottom:20px}
+.size-btn{flex:1;border:none;border-radius:10px;padding:10px 8px;cursor:pointer;font-weight:600;transition:all .15s}
+.size-btn.on{background:var(--ac);color:#fff}
+.size-btn.off{background:var(--alt);color:var(--tx)}
+
+/* ---------- LETTER DISPLAY ---------- */
+.letter-big{font-size:130px;font-weight:900;line-height:1;text-align:center;font-family:Georgia,'Times New Roman',serif;letter-spacing:-2px;transition:color .5s}
+.l-idle{color:var(--alt)}
+.l-anim{color:var(--ac)}
+.l-done{color:var(--tx)}
+
+/* ---------- STEP DOTS ---------- */
+.step-dots{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.sdot{width:9px;height:9px;border-radius:50%;background:var(--alt);transition:background .3s}
+.sdot.lit{background:var(--ac)}
+
+/* ---------- STROKE STEPS ---------- */
+.sstep{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px}
+.snum{width:24px;height:24px;border-radius:50%;background:var(--acl);color:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+
+/* ---------- PAPER AREA ---------- */
+.paper{background:var(--sf);border:2.5px dashed var(--bd);border-radius:20px;height:175px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:16px;position:relative;transition:border-color .3s}
+.paper.active{border-color:var(--ac);border-style:solid}
+.paper-ref{position:absolute;top:12px;right:16px;font-size:44px;color:var(--alt);font-weight:900;font-family:Georgia,serif}
+
+/* ---------- GRIPPER STATUS ---------- */
+.grip-row{display:flex;align-items:center;gap:10px;background:var(--acl);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+.gdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.gdot-ok{background:var(--ok);box-shadow:0 0 0 3px rgba(58,148,98,.2)}
+.gdot-off{background:var(--er)}
+
+/* ---------- PULSE ---------- */
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(58,148,98,.4)}50%{box-shadow:0 0 0 9px rgba(58,148,98,0)}}
+.pulse{animation:pulse 1.5s infinite}
+
+/* ---------- CORRECTION ---------- */
+.corr-pair{display:flex;justify-content:center;gap:44px;margin-bottom:16px}
+.lsm{font-size:64px;font-weight:900;font-family:Georgia,serif;line-height:1}
+
+/* ---------- HELPFUL BOX ---------- */
+.helpbox{border:1.5px solid rgba(58,148,98,.22);background:rgba(58,148,98,.06);border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:14px;color:var(--tx);line-height:1.55}
+
+/* ---------- WIN ---------- */
+.win-icon{font-size:84px;text-align:center;margin:28px 0 18px;line-height:1}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.stat-card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:16px;text-align:center}
+.sv{font-size:22px;font-weight:800;color:var(--tx)}
+.sl{font-size:11px;color:var(--sub);margin-top:3px}
+
+/* ---------- LETTER CHIPS ---------- */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;font-family:Georgia,serif}
+.chip-ok{background:rgba(58,148,98,.12);color:var(--ok);border:1.5px solid rgba(58,148,98,.28)}
+.chip-no{background:var(--alt);color:var(--sub);border:1.5px solid var(--bd)}
+
+/* ---------- TREND BARS ---------- */
+.trow{margin-bottom:14px}
+.tlabel{display:flex;justify-content:space-between;margin-bottom:5px}
+.ttrack{height:8px;background:var(--alt);border-radius:4px;overflow:hidden}
+.tfill{height:100%;border-radius:4px;background:var(--ac)}
+
+/* ---------- STUDENT ROWS ---------- */
+.sturow{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:10px}
+.stuinfo{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--acl);color:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+
+/* ---------- METRIC CARDS ---------- */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.mc{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:13px 10px;text-align:center}
+.mv{font-size:22px;font-weight:900;color:var(--ac)}
+.ml{font-size:10px;color:var(--sub);margin-top:3px;line-height:1.35}
+
+/* ---------- TABS ---------- */
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{background:var(--alt);color:var(--sub);border:none;border-radius:10px;padding:8px 18px;cursor:pointer;font-weight:600;font-size:13px;transition:all .15s}
+.tab.on{background:var(--ac);color:#fff}
+
+/* ---------- ASSIGN ROW ---------- */
+.arow{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--bd)}
+.arow:last-child{border:none}
+.acheck{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:2px}
+.acheck.y{background:var(--ac);color:#fff}
+.acheck.n{background:var(--alt);border:1.5px solid var(--bd)}
+
+/* ---------- SECTION LABEL ---------- */
+.slabel{font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.06em;margin-bottom:10px;margin-top:2px}
+
+/* ---------- BAR CHART ---------- */
+.bar-chart{display:flex;gap:8px;align-items:flex-end;height:80px;margin-top:10px}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bbar{width:100%;border-radius:4px 4px 0 0;background:var(--ac);min-height:4px}
+.bday{font-size:11px;color:var(--sub)}
+.bbar.empty{background:var(--alt);min-height:4px}
+
+/* ---------- ACCESS ROW ---------- */
+.acessrow{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--bd)}
+.acessrow:last-child{border:none}
+
+/* ---------- NOT BUILT YET BANNER ---------- */
+.nbanner{background:rgba(212,136,42,.1);border:1.5px solid rgba(212,136,42,.3);border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:var(--warn);display:flex;gap:8px;align-items:flex-start}
+
+/* ---------- READING MODE VARS (applied via JS to #app) ---------- */
+#app{--ls:0em;--lh:1.6;--ff:'Segoe UI',system-ui,sans-serif;letter-spacing:var(--ls);line-height:var(--lh);font-family:var(--ff)}
+
+/* ---------- READING MODE CARDS ---------- */
+.rm-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;margin-bottom:20px;scrollbar-width:none}
+.rm-scroll::-webkit-scrollbar{display:none}
+.rm-card{min-width:110px;border-radius:14px;border:2px solid transparent;padding:13px 10px;cursor:pointer;text-align:center;transition:all .18s;flex-shrink:0;background:var(--alt)}
+.rm-card:hover{transform:translateY(-2px)}
+.rm-card.sel{border-color:var(--ac);background:var(--acl)}
+.rm-icon{font-size:26px;margin-bottom:6px}
+.rm-name{font-size:12px;font-weight:700;color:var(--tx);display:block;margin-bottom:3px}
+.rm-tag{font-size:10px;color:var(--sub);line-height:1.35;display:block}
+
+/* ---------- READING MODE ACTIVE BADGE ---------- */
+.rm-badge{display:inline-flex;align-items:center;gap:5px;background:var(--acl);color:var(--ac);font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;margin-bottom:16px}
+
+/* ---------- DYSLEXIA FONT ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700;800;900&display=swap');
+
+
+/* ── Backend status banner ── */
+#backend-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  background: #C85C3A; color: #fff; text-align: center;
+  padding: 8px 16px; font-size: 13px; font-weight: 700;
+  display: none;
+}
+#backend-banner.show { display: block; }
+
+/* ── Child picker cards ── */
+.child-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--sf); border: 1.5px solid var(--bd);
+  border-radius: 16px; padding: 14px 16px; cursor: pointer;
+  margin-bottom: 10px; transition: all .15s;
+}
+.child-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
+.child-card .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--acl);
+  color: var(--ac); display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div id="backend-banner">⚠ Java backend not reachable — start it with: cd java_backend && mvn spring-boot:run</div>
+
+<!-- Login screen - child picker -->
+<div class="device" id="app">
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="screen active" id="s-login">
+  <div class="top-bar">
+    <div style="min-width:60px"></div>
+    <span class="title">NeuroFlow</span>
+    <div style="min-width:60px"></div>
+  </div>
+  <div class="content" style="padding-top:28px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:48px;margin-bottom:12px">🧠</div>
+      <div style="font-size:22px;font-weight:800;color:var(--tx)">Who's learning today?</div>
+      <div style="color:var(--sub);font-size:14px;margin-top:6px">Tap your name to start</div>
+    </div>
+
+    <div id="child-picker">
+      <!-- Populated dynamically from /api/auth/children -->
+      {% for child in children %}
+      <div class="child-card" onclick="loginAs('child', null, {{ child.studentId }})">
+        <div class="avatar">{{ child.initials }}</div>
+        <div>
+          <div style="font-weight:700;color:var(--tx);font-size:15px">{{ child.name }}</div>
+          <div style="color:var(--sub);font-size:12px">Practising letter "{{ child.currentLetter }}" · {{ child.streakDays }} day streak</div>
+        </div>
+        <span style="margin-left:auto;color:var(--sub);font-size:18px">›</span>
+      </div>
+      {% endfor %}
+      {% if not children %}
+      <!-- Fallback if backend is down -->
+      <div class="child-card" onclick="loginAs('child', null, 1)">
+        <div class="avatar">AM</div>
+        <div><div style="font-weight:700;color:var(--tx);font-size:15px">Aarav M.</div>
+          <div style="color:var(--sub);font-size:12px">Practising letter "b" · 4 day streak</div></div>
+        <span style="margin-left:auto;color:var(--sub);font-size:18px">›</span>
+      </div>
+      <div class="child-card" onclick="loginAs('child', null, 2)">
+        <div class="avatar">DR</div>
+        <div><div style="font-weight:700;color:var(--tx);font-size:15px">Diya R.</div>
+          <div style="color:var(--sub);font-size:12px">Practising letter "d" · 2 day streak</div></div>
+        <span style="margin-left:auto;color:var(--sub);font-size:18px">›</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div style="margin-top:18px;text-align:center">
+      <div style="color:var(--sub);font-size:12px;margin-bottom:12px">Parent or educator?</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" style="margin-bottom:0" onclick="promptLogin('parent')">👨‍👩‍👧 Parent</button>
+        <button class="btn btn-ghost" style="margin-bottom:0" onclick="promptLogin('educator')">🎓 Educator</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ============================== SETTINGS OVERLAY ============================== -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="overlay-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:18px;font-weight:700;color:var(--tx)">Comfort Settings</span>
+      <button onclick="closeSettings()" style="background:none;border:none;cursor:pointer;font-size:24px;color:var(--sub);line-height:1">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--sub);margin-bottom:20px">Adjust so the app feels just right for this child</p>
+
+    <p style="font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.06em;margin-bottom:10px">READING MODE</p>
+    <p style="font-size:12px;color:var(--sub);margin-bottom:12px;line-height:1.55">Choose a preset — the app will automatically adjust colours, spacing, font, and motion</p>
+
+    <div class="rm-scroll" id="rm-scroll">
+      <div class="rm-card sel" id="rm-default" onclick="setReadingMode('default',this)">
+        <div class="rm-icon">🌟</div>
+        <span class="rm-name">Default</span>
+        <span class="rm-tag">Standard settings</span>
+      </div>
+      <div class="rm-card" id="rm-dyslexia" onclick="setReadingMode('dyslexia',this)">
+        <div class="rm-icon">📖</div>
+        <span class="rm-name">Dyslexia</span>
+        <span class="rm-tag">Wider spacing · warm background · Lexend font</span>
+      </div>
+      <div class="rm-card" id="rm-adhd" onclick="setReadingMode('adhd',this)">
+        <div class="rm-icon">🎯</div>
+        <span class="rm-name">ADHD Focus</span>
+        <span class="rm-tag">Calm colours · no motion · minimal layout</span>
+      </div>
+      <div class="rm-card" id="rm-sensory" onclick="setReadingMode('sensory',this)">
+        <div class="rm-icon">🌙</div>
+        <span class="rm-name">Sensory-Sensitive</span>
+        <span class="rm-tag">Dark · no sound · no motion · gentle haptic</span>
+      </div>
+      <div class="rm-card" id="rm-vision" onclick="setReadingMode('vision',this)">
+        <div class="rm-icon">🔎</div>
+        <span class="rm-name">Low Vision</span>
+        <span class="rm-tag">Large text · high contrast · bold letters</span>
+      </div>
+    </div>
+
+    <div id="rm-active-badge" style="display:none" class="rm-badge">
+      <span id="rm-badge-text">Default mode</span>
+      <span style="opacity:.6">active</span>
+    </div>
+
+    <div id="rm-note" style="display:none;background:var(--acl);border-radius:10px;padding:11px 13px;margin-bottom:18px;font-size:12px;color:var(--tx);line-height:1.55" id="rm-note"></div>
+
+    <p style="font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.06em;margin-bottom:10px">COLOUR THEME</p>
+    <div class="theme-grid" id="theme-grid">
+      <button class="theme-opt sel" style="background:#F6F1E8;border-color:#4E8FC5;color:#1E1E1E" onclick="setTheme('','#F6F1E8','#4E8FC5',this)">
+        <div class="theme-dot" style="background:#4E8FC5"></div>Soft Cream
+      </button>
+      <button class="theme-opt" style="background:#EEF4FA;color:#1B1F24" onclick="setTheme('t-blue','#EEF4FA','#5B8FB9',this)">
+        <div class="theme-dot" style="background:#5B8FB9"></div>Blue Mist
+      </button>
+      <button class="theme-opt" style="background:#F7EFE3;color:#202020" onclick="setTheme('t-warm','#F7EFE3','#C98F6B',this)">
+        <div class="theme-dot" style="background:#C98F6B"></div>Warm Paper
+      </button>
+      <button class="theme-opt" style="background:#2A2A2A;color:#E6E6E6" onclick="setTheme('t-dark','#2A2A2A','#7BA8F0',this)">
+        <div class="theme-dot" style="background:#7BA8F0"></div>Night
+      </button>
+    </div>
+
+    <p style="font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.06em;margin-bottom:10px">TEXT SIZE</p>
+    <div class="size-row">
+      <button class="size-btn off" style="font-size:12px" onclick="setSize('13px',this)">A small</button>
+      <button class="size-btn on"  style="font-size:15px" onclick="setSize('16px',this)">A medium</button>
+      <button class="size-btn off" style="font-size:19px" onclick="setSize('20px',this)">A large</button>
+    </div>
+
+    <p style="font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.06em;margin-bottom:10px">ACCESSIBILITY</p>
+    <div class="acessrow">
+      <span style="color:var(--tx);font-size:14px">Motion animations</span>
+      <button class="toggle on" onclick="flipToggle(this)"><div class="toggle-knob"></div></button>
+    </div>
+    <div class="acessrow">
+      <span style="color:var(--tx);font-size:14px">Sound effects</span>
+      <button class="toggle on" onclick="flipToggle(this)"><div class="toggle-knob"></div></button>
+    </div>
+    <div class="acessrow">
+      <span style="color:var(--tx);font-size:14px">Haptic intensity</span>
+      <div style="display:flex;gap:6px">
+        <button id="hap-low" onclick="setHaptic(this,'hap-high')" style="background:var(--alt);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--sub);cursor:pointer">Low</button>
+        <button id="hap-high" onclick="setHaptic(this,'hap-low')" style="background:var(--ac);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#fff;cursor:pointer">Medium</button>
+      </div>
+    </div>
+
+    <p style="font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.06em;margin:18px 0 10px">CONFETTI ON WIN</p>
+    <div class="acessrow" style="border:none;padding-top:0">
+      <span style="color:var(--tx);font-size:14px">Show celebration animation</span>
+      <button class="toggle on" onclick="flipToggle(this)"><div class="toggle-knob"></div></button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== DEVICE ============================== -->
+<div class="device" id="app">
+
+<!-- ===================== HOME ===================== -->
+<div class="screen active" id="s-home">
+  <div class="top-bar">
+    <div style="min-width:60px"></div>
+    <span class="title">Learning Time</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="role-bar">
+    <button class="role-btn on" data-r="child" onclick="switchRole(this,'home')">🧒 Child</button>
+    <button class="role-btn" data-r="parent" onclick="switchRole(this,'parent')">👨‍👩‍👧 Parent</button>
+    <button class="role-btn" data-r="edu" onclick="switchRole(this,'educator')">🎓 Educator</button>
+  </div>
+  <div class="content" style="padding-top:20px">
+    <div style="margin-bottom:20px">
+      <div style="font-size:24px;font-weight:800;color:var(--tx)">Good morning! 👋</div>
+      <div style="color:var(--sub);margin-top:4px">Ready to practise today?</div>
+    </div>
+
+    <div class="grip-row">
+      <div class="gdot gdot-ok"></div>
+      <div>
+        <div style="font-weight:700;color:var(--tx);font-size:14px">Smart Gripper connected</div>
+        <div style="color:var(--sub);font-size:12px">Ready to start writing</div>
+      </div>
+    </div>
+
+    <p class="slabel">CHOOSE A MODULE</p>
+
+    <button class="module-tile" onclick="goTo('watch')">
+      <div class="m-icon" style="background:rgba(78,143,197,.13)">✏️</div>
+      <div>
+        <div style="font-weight:800;font-size:17px;color:var(--tx)">Literacy</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Letters &amp; reading</div>
+        <div style="color:var(--ac);font-size:12px;margin-top:4px;font-weight:600">b, d, p, q &nbsp;•&nbsp; phonics</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <button class="module-tile" onclick="goTo('numeracy')">
+      <div class="m-icon" style="background:rgba(58,148,98,.12)">🔢</div>
+      <div>
+        <div style="font-weight:800;font-size:17px;color:var(--tx)">Numeracy</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Numbers &amp; counting</div>
+        <div style="color:var(--ok);font-size:12px;margin-top:4px;font-weight:600">0–9 &nbsp;•&nbsp; number shapes</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <button class="module-tile" onclick="goTo('thinking')">
+      <div class="m-icon" style="background:rgba(155,126,212,.12)">🧩</div>
+      <div>
+        <div style="font-weight:800;font-size:17px;color:var(--tx)">Thinking Skills</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Patterns &amp; sequences</div>
+        <div style="color:#9B7ED4;font-size:12px;margin-top:4px;font-weight:600">sort &nbsp;•&nbsp; match &nbsp;•&nbsp; sequence</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <div class="card">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:12px">Yesterday's practice</div>
+      <div class="chips">
+        <div class="chip chip-ok">b</div>
+        <div class="chip chip-ok">d</div>
+        <div class="chip chip-ok">p</div>
+        <div class="chip chip-no">q</div>
+      </div>
+      <div style="color:var(--sub);font-size:12px;margin-top:9px">3 of 4 letters practised ✓</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== NUMERACY ===================== -->
+<div class="screen" id="s-numeracy">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('home')">← Home</button>
+    <span class="title">Numbers</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div style="color:var(--sub);margin-bottom:14px;text-align:center">Choose a number to practise writing</div>
+
+    <div class="grip-row" style="margin-bottom:18px">
+      <div class="gdot gdot-ok pulse"></div>
+      <span style="font-size:13px;color:var(--tx);font-weight:600">Smart Gripper ready</span>
+      <span style="font-size:12px;color:var(--sub);margin-left:auto">0 – 9</span>
+    </div>
+
+    <p class="slabel">PICK A NUMBER</p>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px">
+      <button onclick="goToNumWatch(0)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">0</button>
+      <button onclick="goToNumWatch(1)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">1</button>
+      <button onclick="goToNumWatch(2)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">2</button>
+      <button onclick="goToNumWatch(3)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">3</button>
+      <button onclick="goToNumWatch(4)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">4</button>
+      <button onclick="goToNumWatch(5)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">5</button>
+      <button onclick="goToNumWatch(6)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">6</button>
+      <button onclick="goToNumWatch(7)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">7</button>
+      <button onclick="goToNumWatch(8)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">8</button>
+      <button onclick="goToNumWatch(9)" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;padding:14px 0;cursor:pointer;font-size:26px;font-weight:900;color:var(--tx);font-family:Georgia,serif;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">9</button>
+    </div>
+
+    <div class="card" style="background:var(--acl);border-color:transparent">
+      <div style="font-weight:700;color:var(--ac);margin-bottom:6px;font-size:14px">🤖 ML model is watching</div>
+      <div style="color:var(--tx);font-size:13px;line-height:1.55">When you write, the smart gripper will recognise which digit you wrote — even if it looks a little different each time!</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== NUMBER WATCH ===================== -->
+<div class="screen" id="s-numwatch">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('numeracy')">← Numbers</button>
+    <span class="title" id="nw-title">Watch &amp; Learn</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div style="color:var(--sub);margin-bottom:14px;text-align:center" id="nw-subtitle">Watch how to write the number</div>
+
+    <div class="card" style="text-align:center;padding:28px 20px;margin-bottom:14px">
+      <div style="position:relative;display:inline-block">
+        <div id="nw-startdot" style="display:none;position:absolute;top:8px;left:calc(50% - 8px);width:16px;height:16px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 5px rgba(58,148,98,.22);animation:pulse 1.2s infinite;z-index:2"></div>
+        <svg id="nw-svg" viewBox="0 0 120 180" width="120" height="152" style="display:block;margin:0 auto;overflow:visible">
+          <path id="nws1" stroke-width="13" stroke-linecap="round" fill="none" style="stroke:var(--alt)"/>
+          <path id="nws2" stroke-width="13" stroke-linecap="round" fill="none" style="stroke:var(--alt)"/>
+          <path id="nws3" stroke-width="13" stroke-linecap="round" fill="none" style="stroke:var(--alt)"/>
+        </svg>
+      </div>
+      <div class="step-dots" id="nw-dots"></div>
+      <div id="nwstatus" style="color:var(--sub);font-size:13px;margin-top:10px;font-weight:600;min-height:20px">Press play to see how</div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px" id="nw-steps-card">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:12px;font-size:14px" id="nw-steps-title">How to write</div>
+      <div id="nw-steps-list"></div>
+    </div>
+
+    <div id="nwbtns1">
+      <button class="btn btn-ac" onclick="playNumWatch()">▶&nbsp; Watch the animation</button>
+    </div>
+    <div id="nwbtns2" style="display:none">
+      <button class="btn btn-ok" onclick="goTo('try')">✏️&nbsp; Now I'll try it!</button>
+      <button class="btn btn-ghost" onclick="replayNumWatch()">↩&nbsp; Watch again</button>
+    </div>
+
+    <button onclick="speakNumber()" id="speak-num-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;background:transparent;border:none;cursor:pointer;color:var(--ac);font-weight:600;font-size:14px;padding:10px">
+      🔊 Hear the number
+    </button>
+  </div>
+</div>
+
+<!-- ===================== THINKING SKILLS ===================== -->
+<div class="screen" id="s-thinking">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('home')">← Home</button>
+    <span class="title">Thinking Skills</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div style="color:var(--sub);margin-bottom:18px;text-align:center">Pick an activity — take your time!</div>
+
+    <p class="slabel">LETTERS &amp; READING</p>
+
+    <button class="module-tile" onclick="goTo('think-detective')" style="margin-bottom:10px">
+      <div class="m-icon" style="background:rgba(78,143,197,.13);font-size:26px">🔍</div>
+      <div>
+        <div style="font-weight:800;font-size:16px;color:var(--tx)">Letter Detective</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Find all the matching letters in a row</div>
+        <div style="color:var(--ac);font-size:12px;margin-top:4px;font-weight:600">b/d/p/q &nbsp;•&nbsp; visual discrimination</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <button class="module-tile" onclick="goTo('think-sound')" style="margin-bottom:10px">
+      <div class="m-icon" style="background:rgba(58,148,98,.12);font-size:26px">🔊</div>
+      <div>
+        <div style="font-weight:800;font-size:16px;color:var(--tx)">Sound Explorer</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Hear a sound — find the picture it matches</div>
+        <div style="color:var(--ok);font-size:12px;margin-top:4px;font-weight:600">phonics &nbsp;•&nbsp; auditory processing</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <p class="slabel" style="margin-top:8px">PATTERNS &amp; LOGIC</p>
+
+    <button class="module-tile" onclick="goTo('think-pattern')" style="margin-bottom:10px">
+      <div class="m-icon" style="background:rgba(214,139,37,.12);font-size:26px">🚂</div>
+      <div>
+        <div style="font-weight:800;font-size:16px;color:var(--tx)">Pattern Train</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">What comes next in the pattern?</div>
+        <div style="color:var(--warn);font-size:12px;margin-top:4px;font-weight:600">sequencing &nbsp;•&nbsp; logical thinking</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <button class="module-tile" onclick="goTo('think-robot')" style="margin-bottom:10px">
+      <div class="m-icon" style="background:rgba(155,126,212,.13);font-size:26px">🤖</div>
+      <div>
+        <div style="font-weight:800;font-size:16px;color:var(--tx)">Robot Directions</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Guide the robot to the star with arrows</div>
+        <div style="color:#9B7ED4;font-size:12px;margin-top:4px;font-weight:600">planning &nbsp;•&nbsp; computational thinking</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <p class="slabel" style="margin-top:8px">MEMORY &amp; FOCUS</p>
+
+    <button class="module-tile" onclick="goTo('think-memory')" style="margin-bottom:10px">
+      <div class="m-icon" style="background:rgba(58,148,98,.12);font-size:26px">🌱</div>
+      <div>
+        <div style="font-weight:800;font-size:16px;color:var(--tx)">Memory Garden</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Remember the flowers — then put them back</div>
+        <div style="color:var(--ok);font-size:12px;margin-top:4px;font-weight:600">working memory &nbsp;•&nbsp; attention</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <button class="module-tile" onclick="goTo('think-story')" style="margin-bottom:10px">
+      <div class="m-icon" style="background:rgba(200,92,58,.1);font-size:26px">📖</div>
+      <div>
+        <div style="font-weight:800;font-size:16px;color:var(--tx)">Story Builder</div>
+        <div style="color:var(--sub);font-size:13px;margin-top:2px">Put the pictures in the right order</div>
+        <div style="color:var(--er);font-size:12px;margin-top:4px;font-weight:600">sequencing &nbsp;•&nbsp; language &nbsp;•&nbsp; creativity</div>
+      </div>
+      <span class="m-arrow">›</span>
+    </button>
+
+    <div class="card" style="background:rgba(155,126,212,.07);border-color:rgba(155,126,212,.2);margin-top:4px">
+      <div style="font-size:13px;color:var(--tx);line-height:1.6">💜 No timers, no pressure — every activity is just for exploring!</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== THINK: LETTER DETECTIVE ===================== -->
+<div class="screen" id="s-think-detective">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('thinking')">← Activities</button>
+    <span class="title">Letter Detective</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div class="card" style="background:var(--acl);border-color:transparent;margin-bottom:18px">
+      <div style="font-weight:700;color:var(--ac);font-size:15px;margin-bottom:4px">🔍 Your mission</div>
+      <div style="color:var(--tx);font-size:14px;line-height:1.6">Find all the <strong>"b"</strong> letters hiding in the row — tap each one you spot!</div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:28px 16px">
+      <div style="display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:24px">
+        <div onclick="tDetTap(this,'b')" style="width:52px;height:52px;border-radius:14px;background:var(--alt);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;font-family:Georgia,serif;cursor:pointer;transition:all .15s;color:var(--tx)">b</div>
+        <div onclick="tDetTap(this,'d')" style="width:52px;height:52px;border-radius:14px;background:var(--alt);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;font-family:Georgia,serif;cursor:pointer;transition:all .15s;color:var(--tx)">d</div>
+        <div onclick="tDetTap(this,'b')" style="width:52px;height:52px;border-radius:14px;background:var(--alt);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;font-family:Georgia,serif;cursor:pointer;transition:all .15s;color:var(--tx)">b</div>
+        <div onclick="tDetTap(this,'p')" style="width:52px;height:52px;border-radius:14px;background:var(--alt);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;font-family:Georgia,serif;cursor:pointer;transition:all .15s;color:var(--tx)">p</div>
+        <div onclick="tDetTap(this,'b')" style="width:52px;height:52px;border-radius:14px;background:var(--alt);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;font-family:Georgia,serif;cursor:pointer;transition:all .15s;color:var(--tx)">b</div>
+        <div onclick="tDetTap(this,'d')" style="width:52px;height:52px;border-radius:14px;background:var(--alt);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;font-family:Georgia,serif;cursor:pointer;transition:all .15s;color:var(--tx)">d</div>
+      </div>
+      <div id="tdet-feedback" style="min-height:28px;font-size:14px;font-weight:700;color:var(--sub)">Tap the b's!</div>
+    </div>
+
+    <div class="card" style="margin-top:4px">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:8px;font-size:14px">Why this helps</div>
+      <div style="color:var(--sub);font-size:13px;line-height:1.6">Many children mix up b, d, p and q — they look very similar! This game trains your eyes to spot the tiny differences. The more you practise, the easier reading becomes. 🌟</div>
+    </div>
+
+    <div style="margin-top:14px">
+      <button class="btn btn-ok" onclick="tDetReset()">▶ Try the next round!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== THINK: SOUND EXPLORER ===================== -->
+<div class="screen" id="s-think-sound">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('thinking')">← Activities</button>
+    <span class="title">Sound Explorer</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div class="card" style="background:rgba(58,148,98,.07);border-color:rgba(58,148,98,.2);margin-bottom:18px">
+      <div style="font-weight:700;color:var(--ok);font-size:15px;margin-bottom:4px">🔊 Listen carefully</div>
+      <div style="color:var(--tx);font-size:14px;line-height:1.6">The app will say a letter sound. Tap the picture whose name <strong>starts with that sound!</strong></div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
+      <div style="background:var(--ok);color:#fff;border-radius:50%;width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;margin:0 auto 16px;font-family:Georgia,serif">B</div>
+      <div style="color:var(--sub);font-size:13px;margin-bottom:20px;font-weight:600">Which picture starts with the "B" sound?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button onclick="tSoundTap(this,false)" style="background:var(--alt);border:2px solid var(--bd);border-radius:16px;padding:18px 8px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <span style="font-size:36px">🐶</span>
+          <span style="font-size:13px;font-weight:700;color:var(--tx)">Dog</span>
+        </button>
+        <button onclick="tSoundTap(this,true)" style="background:var(--alt);border:2px solid var(--bd);border-radius:16px;padding:18px 8px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <span style="font-size:36px">🍌</span>
+          <span style="font-size:13px;font-weight:700;color:var(--tx)">Banana</span>
+        </button>
+        <button onclick="tSoundTap(this,false)" style="background:var(--alt);border:2px solid var(--bd);border-radius:16px;padding:18px 8px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <span style="font-size:36px">🚗</span>
+          <span style="font-size:13px;font-weight:700;color:var(--tx)">Car</span>
+        </button>
+        <button onclick="tSoundTap(this,false)" style="background:var(--alt);border:2px solid var(--bd);border-radius:16px;padding:18px 8px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <span style="font-size:36px">🌙</span>
+          <span style="font-size:13px;font-weight:700;color:var(--tx)">Moon</span>
+        </button>
+      </div>
+      <div id="tsound-feedback" style="margin-top:16px;min-height:24px;font-size:14px;font-weight:700;color:var(--sub)">Tap the picture!</div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:8px;font-size:14px">Why this helps</div>
+      <div style="color:var(--sub);font-size:13px;line-height:1.6">Connecting letter sounds to pictures builds phonics awareness — the foundation of reading. This directly supports the NeuroFlow literacy module. 📚</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== THINK: PATTERN TRAIN ===================== -->
+<div class="screen" id="s-think-pattern">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('thinking')">← Activities</button>
+    <span class="title">Pattern Train</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div class="card" style="background:rgba(214,139,37,.08);border-color:rgba(214,139,37,.25);margin-bottom:18px">
+      <div style="font-weight:700;color:var(--warn);font-size:15px;margin-bottom:4px">🚂 Keep the train going!</div>
+      <div style="color:var(--tx);font-size:14px;line-height:1.6">Look at the pattern — tap the shape or colour that comes next!</div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--sub);margin-bottom:14px;letter-spacing:.04em">WHAT COMES NEXT?</div>
+      <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-bottom:24px;flex-wrap:wrap">
+        <div style="width:44px;height:44px;border-radius:50%;background:#E05C5C;flex-shrink:0"></div>
+        <div style="width:44px;height:44px;border-radius:6px;background:#5B8FB9;flex-shrink:0"></div>
+        <div style="width:44px;height:44px;border-radius:50%;background:#E05C5C;flex-shrink:0"></div>
+        <div style="width:44px;height:44px;border-radius:6px;background:#5B8FB9;flex-shrink:0"></div>
+        <div style="width:44px;height:44px;border-radius:50%;background:#E05C5C;flex-shrink:0"></div>
+        <div style="width:44px;height:44px;border-radius:6px;background:var(--alt);border:2.5px dashed var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--sub)">?</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button onclick="tPatTap(this,true)" style="background:var(--alt);border:2px solid var(--bd);border-radius:14px;padding:16px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .15s">
+          <div style="width:40px;height:40px;border-radius:6px;background:#5B8FB9"></div>
+          <span style="font-size:12px;font-weight:700;color:var(--tx)">Blue square</span>
+        </button>
+        <button onclick="tPatTap(this,false)" style="background:var(--alt);border:2px solid var(--bd);border-radius:14px;padding:16px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .15s">
+          <div style="width:40px;height:40px;border-radius:50%;background:#E05C5C"></div>
+          <span style="font-size:12px;font-weight:700;color:var(--tx)">Red circle</span>
+        </button>
+        <button onclick="tPatTap(this,false)" style="background:var(--alt);border:2px solid var(--bd);border-radius:14px;padding:16px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .15s">
+          <div style="width:40px;height:40px;border-radius:50%;background:#5B8FB9"></div>
+          <span style="font-size:12px;font-weight:700;color:var(--tx)">Blue circle</span>
+        </button>
+        <button onclick="tPatTap(this,false)" style="background:var(--alt);border:2px solid var(--bd);border-radius:14px;padding:16px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .15s">
+          <div style="width:40px;height:40px;border-radius:6px;background:#E05C5C"></div>
+          <span style="font-size:12px;font-weight:700;color:var(--tx)">Red square</span>
+        </button>
+      </div>
+      <div id="tpat-feedback" style="margin-top:16px;min-height:24px;font-size:14px;font-weight:700;color:var(--sub)">Choose the missing piece!</div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:8px;font-size:14px">Why this helps</div>
+      <div style="color:var(--sub);font-size:13px;line-height:1.6">Spotting patterns builds logical thinking and early maths skills. It also trains the brain to look for structure — a key skill for reading and writing too. 🧠</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== THINK: ROBOT DIRECTIONS ===================== -->
+<div class="screen" id="s-think-robot">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('thinking')">← Activities</button>
+    <span class="title">Robot Directions</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div class="card" style="background:rgba(155,126,212,.08);border-color:rgba(155,126,212,.25);margin-bottom:18px">
+      <div style="font-weight:700;color:#9B7ED4;font-size:15px;margin-bottom:4px">🤖 Guide your robot!</div>
+      <div style="color:var(--tx);font-size:14px;line-height:1.6">Tap the arrow buttons to move the robot step by step to reach the ⭐</div>
+    </div>
+
+    <div class="card" style="padding:18px 12px;margin-bottom:14px">
+      <!-- 4x4 grid -->
+      <div id="robot-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:18px">
+      </div>
+      <div id="trobot-feedback" style="text-align:center;min-height:22px;font-size:14px;font-weight:700;color:var(--sub);margin-bottom:14px">Use the arrows to move!</div>
+      <!-- Arrow controls -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:180px;margin:0 auto">
+        <div></div>
+        <button onclick="moveRobot('up')" style="background:var(--alt);border:none;border-radius:12px;padding:14px;font-size:22px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--alt)'">⬆️</button>
+        <div></div>
+        <button onclick="moveRobot('left')" style="background:var(--alt);border:none;border-radius:12px;padding:14px;font-size:22px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--alt)'">⬅️</button>
+        <button onclick="moveRobot('down')" style="background:var(--alt);border:none;border-radius:12px;padding:14px;font-size:22px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--alt)'">⬇️</button>
+        <button onclick="moveRobot('right')" style="background:var(--alt);border:none;border-radius:12px;padding:14px;font-size:22px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--acl)'" onmouseout="this.style.background='var(--alt)'">➡️</button>
+      </div>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="resetRobot()" style="background:transparent;border:none;cursor:pointer;color:var(--ac);font-size:13px;font-weight:600">↩ Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:8px;font-size:14px">Why this helps</div>
+      <div style="color:var(--sub);font-size:13px;line-height:1.6">Planning a sequence of moves trains executive function and directional thinking — the same skills needed for left-to-right reading and ordered writing. 🧩</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== THINK: MEMORY GARDEN ===================== -->
+<div class="screen" id="s-think-memory">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('thinking')">← Activities</button>
+    <span class="title">Memory Garden</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div class="card" style="background:rgba(58,148,98,.07);border-color:rgba(58,148,98,.2);margin-bottom:18px">
+      <div style="font-weight:700;color:var(--ok);font-size:15px;margin-bottom:4px">🌱 Remember the flowers!</div>
+      <div style="color:var(--tx);font-size:14px;line-height:1.6">Look carefully at the flowers — then they'll hide! Tap them in the <strong>same order</strong> you saw them.</div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:24px 16px;margin-bottom:14px">
+      <div id="mem-show-area" style="display:flex;justify-content:center;gap:16px;margin-bottom:20px;min-height:64px;align-items:center">
+        <div id="mf0" style="font-size:48px;transition:opacity .4s">🌷</div>
+        <div id="mf1" style="font-size:48px;transition:opacity .4s">🌻</div>
+        <div id="mf2" style="font-size:48px;transition:opacity .4s">🌹</div>
+      </div>
+      <div id="mem-status" style="font-size:13px;color:var(--sub);font-weight:600;margin-bottom:18px">Look carefully...</div>
+      <div style="display:flex;justify-content:center;gap:12px">
+        <button onclick="memTap(0)" id="memb0" style="font-size:36px;background:var(--alt);border:2px solid var(--bd);border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .15s;opacity:.4" disabled>🌷</button>
+        <button onclick="memTap(1)" id="memb1" style="font-size:36px;background:var(--alt);border:2px solid var(--bd);border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .15s;opacity:.4" disabled>🌻</button>
+        <button onclick="memTap(2)" id="memb2" style="font-size:36px;background:var(--alt);border:2px solid var(--bd);border-radius:14px;padding:12px 16px;cursor:pointer;transition:all .15s;opacity:.4" disabled>🌹</button>
+      </div>
+      <div id="mem-feedback" style="margin-top:14px;min-height:24px;font-size:14px;font-weight:700;color:var(--sub)"></div>
+      <button class="btn btn-ac" onclick="startMemory()" id="mem-start-btn" style="margin-top:16px;margin-bottom:0">▶ Show me the flowers!</button>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:8px;font-size:14px">Why this helps</div>
+      <div style="color:var(--sub);font-size:13px;line-height:1.6">Working memory is how we hold information while we use it — essential for reading sentences, following instructions, and learning new things. 🌼</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== THINK: STORY BUILDER ===================== -->
+<div class="screen" id="s-think-story">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('thinking')">← Activities</button>
+    <span class="title">Story Builder</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div class="card" style="background:rgba(200,92,58,.07);border-color:rgba(200,92,58,.2);margin-bottom:18px">
+      <div style="font-weight:700;color:var(--er);font-size:15px;margin-bottom:4px">📖 Tell the story!</div>
+      <div style="color:var(--tx);font-size:14px;line-height:1.6">These pictures are all mixed up. Tap them in the right order to tell the story from start to finish.</div>
+    </div>
+
+    <div class="card" style="padding:20px 16px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.05em;margin-bottom:14px">TAP IN ORDER: 1 → 2 → 3</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">
+        <button onclick="storyTap(this,1,'seed')" id="story-seed" style="background:var(--alt);border:2.5px solid var(--bd);border-radius:16px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .15s;position:relative">
+          <span style="font-size:34px">🌱</span>
+          <span style="font-size:11px;font-weight:700;color:var(--sub)">Boy finds seed</span>
+          <div id="story-seed-n" style="display:none;position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center"></div>
+        </button>
+        <button onclick="storyTap(this,3,'flower')" id="story-flower" style="background:var(--alt);border:2.5px solid var(--bd);border-radius:16px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .15s;position:relative">
+          <span style="font-size:34px">🌸</span>
+          <span style="font-size:11px;font-weight:700;color:var(--sub)">Flower grows!</span>
+          <div id="story-flower-n" style="display:none;position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center"></div>
+        </button>
+        <button onclick="storyTap(this,2,'water')" id="story-water" style="background:var(--alt);border:2.5px solid var(--bd);border-radius:16px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .15s;position:relative">
+          <span style="font-size:34px">💧</span>
+          <span style="font-size:11px;font-weight:700;color:var(--sub)">Boy waters it</span>
+          <div id="story-water-n" style="display:none;position:absolute;top:6px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center"></div>
+        </button>
+      </div>
+      <div id="tstory-feedback" style="text-align:center;min-height:24px;font-size:14px;font-weight:700;color:var(--sub)">Tap 1st, then 2nd, then 3rd!</div>
+      <button onclick="storyReset()" style="display:block;width:100%;background:transparent;border:none;cursor:pointer;color:var(--ac);font-size:13px;font-weight:600;margin-top:8px">↩ Start over</button>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:8px;font-size:14px">Why this helps</div>
+      <div style="color:var(--sub);font-size:13px;line-height:1.6">Understanding that events happen in order builds sequencing skills — essential for following written instructions, telling stories, and understanding cause and effect. 📚</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== WATCH ===================== -->
+<div class="screen" id="s-watch">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('home')">← Home</button>
+    <span class="title">Watch &amp; Learn</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div style="color:var(--sub);margin-bottom:14px;text-align:center">Watch how to write the letter</div>
+
+    <div class="card" style="text-align:center;padding:28px 20px;margin-bottom:14px">
+      <div style="position:relative;display:inline-block">
+        <!-- Pulsing start-dot shown before animation plays -->
+        <div id="w-startdot" style="display:none;position:absolute;top:8px;left:calc(50% - 25px);width:16px;height:16px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 5px rgba(58,148,98,.22);animation:pulse 1.2s infinite;z-index:2"></div>
+        <!-- SVG letter b — drawn stroke by stroke -->
+        <svg id="wletter-svg" viewBox="0 0 110 168" width="130" height="152" style="display:block;margin:0 auto;overflow:visible">
+          <!-- Stroke 1: vertical stem -->
+          <path id="ws1" d="M 40,12 L 40,150"
+            stroke-width="13" stroke-linecap="round" fill="none"
+            style="stroke:var(--alt)"/>
+          <!-- Stroke 2: bowl bump to the right -->
+          <path id="ws2" d="M 40,84 C 40,58 108,58 108,112 C 108,157 64,163 40,150"
+            stroke-width="13" stroke-linecap="round" fill="none"
+            style="stroke:var(--alt)"/>
+        </svg>
+      </div>
+      <div class="step-dots">
+        <div class="sdot" id="sd0"></div>
+        <div class="sdot" id="sd1"></div>
+        <div class="sdot" id="sd2"></div>
+      </div>
+      <div id="wstatus" style="color:var(--sub);font-size:13px;margin-top:10px;font-weight:600;min-height:20px">Press play to see how</div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:700;color:var(--tx);margin-bottom:12px;font-size:14px">How to write "b"</div>
+      <div class="sstep"><div class="snum">1</div><span style="color:var(--tx);font-size:14px;padding-top:3px">Start at the top — place your pencil high up</span></div>
+      <div class="sstep"><div class="snum">2</div><span style="color:var(--tx);font-size:14px;padding-top:3px">Draw a straight line all the way down</span></div>
+      <div class="sstep"><div class="snum">3</div><span style="color:var(--tx);font-size:14px;padding-top:3px">Add a round bump to the <strong>RIGHT</strong> side</span></div>
+    </div>
+
+    <div id="wbtns1">
+      <button class="btn btn-ac" onclick="playWatch()">▶&nbsp; Watch the animation</button>
+    </div>
+    <div id="wbtns2" style="display:none">
+      <button class="btn btn-ok" onclick="goTo('try')">✏️&nbsp; Now I'll try it!</button>
+      <button class="btn btn-ghost" onclick="replayWatch()">↩&nbsp; Watch again</button>
+    </div>
+
+    <button onclick="speakLetter()" id="speak-btn" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;background:transparent;border:none;cursor:pointer;color:var(--ac);font-weight:600;font-size:14px;padding:10px">
+      🔊 Hear the letter sound
+    </button>
+  </div>
+</div>
+
+<!-- ===================== TRY ===================== -->
+<div class="screen" id="s-try">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('watch')">← Watch</button>
+    <span class="title">Your Turn</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div class="prog-track" style="flex:1"><div class="prog-fill" id="try-prog" style="width:20%"></div></div>
+      <span style="color:var(--sub);font-size:13px;font-weight:600;white-space:nowrap" id="try-step">1 of 5</span>
+    </div>
+
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:20px;font-weight:800;color:var(--tx);margin-bottom:5px">Now you try writing "b"</div>
+      <div style="color:var(--sub)">Use your gripper on paper</div>
+    </div>
+
+    <div class="paper" id="try-paper">
+      <div id="try-idle" style="text-align:center;color:var(--sub)">
+        <div style="font-size:34px;margin-bottom:8px">📝</div>
+        <div style="font-size:14px">Press Start, then write on paper</div>
+      </div>
+      <div id="try-live" style="display:none;text-align:center">
+        <div class="gdot gdot-ok pulse" style="margin:0 auto 10px"></div>
+        <div style="color:var(--ok);font-weight:700;font-size:14px">Listening...</div>
+        <div style="color:var(--sub);font-size:12px;margin-top:4px">Gripper is tracking your writing</div>
+      </div>
+      <div id="try-paused-txt" style="display:none;text-align:center">
+        <div style="font-size:30px;margin-bottom:8px">⏸</div>
+        <div style="color:var(--sub);font-size:14px">Paused</div>
+      </div>
+      <div class="paper-ref">b</div>
+    </div>
+
+    <div class="grip-row">
+      <div class="gdot gdot-ok"></div>
+      <span style="font-size:13px;color:var(--tx);font-weight:600">Gripper connected</span>
+      <span style="font-size:12px;color:var(--sub);margin-left:auto">Haptic: gentle</span>
+    </div>
+
+    <div id="try-s0">
+      <button class="btn btn-ac" onclick="startTry();tryStartSession()">▶&nbsp; Start writing</button>
+    </div>
+    <div id="try-s1" style="display:none">
+      <button class="btn btn-muted" onclick="pauseTry()">⏸&nbsp; Pause</button>
+      <button class="btn btn-ghost" onclick="simulateLetterAttempt()" style="font-size:13px">Simulate stroke attempt (demo)</button>
+    </div>
+    <div id="try-s2" style="display:none">
+      <button class="btn btn-ac" onclick="resumeTry()">▶&nbsp; Continue</button>
+      <button class="btn btn-ghost" onclick="goTo('guide')">See hint</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== GUIDE ===================== -->
+<div class="screen" id="s-guide">
+  <div class="top-bar">
+    <button class="btn-back" onclick="goTo('try')">← Back</button>
+    <span class="title">Let's adjust</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:13px;color:var(--sub);margin-bottom:6px">Your gripper noticed something</div>
+      <div style="font-size:22px;font-weight:800;color:var(--tx)">Try starting here →</div>
+    </div>
+
+    <div class="card" style="text-align:center">
+      <div class="corr-pair">
+        <div style="text-align:center;opacity:.5">
+          <div class="lsm" style="color:var(--er);text-decoration:line-through;text-decoration-color:var(--er)">d</div>
+          <div style="font-size:12px;color:var(--er);font-weight:600;margin-top:5px">Not this way</div>
+        </div>
+        <div style="text-align:center">
+          <div class="lsm" style="color:var(--ok)">b</div>
+          <div style="font-size:12px;color:var(--ok);font-weight:600;margin-top:5px">Try this ✓</div>
+        </div>
+      </div>
+      <div style="background:var(--acl);border-radius:12px;padding:12px 16px">
+        <div style="font-size:14px;color:var(--tx);font-weight:600">The bump goes to the RIGHT →</div>
+      </div>
+    </div>
+
+    <div class="helpbox">
+      💙 No worries — b and d are the trickiest letters! You're doing great just by practising.
+    </div>
+
+    <button class="btn btn-ok" onclick="goTo('win')">Let's try again!</button>
+    <button class="btn btn-ghost" onclick="goTo('watch')">↩&nbsp; Watch the letter again</button>
+  </div>
+</div>
+
+<!-- ===================== WIN ===================== -->
+<div class="screen" id="s-win">
+  <div class="top-bar">
+    <div style="min-width:60px"></div>
+    <span class="title">Great work!</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="content" style="text-align:center">
+    <div class="win-icon">🌟</div>
+    <div style="font-size:28px;font-weight:900;color:var(--tx);margin-bottom:8px">Done for today!</div>
+    <div style="color:var(--sub);font-size:16px;margin-bottom:26px">You practised the letter "b" — keep it up!</div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div style="font-size:24px;margin-bottom:4px">⏱</div><div class="sv" id="win-duration">12 min</div><div class="sl">Time practised</div></div>
+      <div class="stat-card"><div style="font-size:24px;margin-bottom:4px">✏️</div><div class="sv" id="win-attempts">5 tries</div><div class="sl">Attempts made</div></div>
+      <div class="stat-card"><div style="font-size:24px;margin-bottom:4px">🎯</div><div class="sv">3 letters</div><div class="sl">This week</div></div>
+      <div class="stat-card"><div style="font-size:24px;margin-bottom:4px">🔥</div><div class="sv">4 days</div><div class="sl">Streak</div></div>
+    </div>
+
+    <button class="btn btn-ac" onclick="goTo('watch')">One more? (letter "d") →</button>
+    <button class="btn btn-ghost" onclick="goTo('home')">Back to home</button>
+    <div style="color:var(--sub);font-size:12px;margin-top:14px">Your parent can see your progress automatically</div>
+  </div>
+</div>
+
+<!-- ===================== PARENT ===================== -->
+<div class="screen" id="s-parent">
+  <div class="top-bar">
+    <div style="min-width:60px"></div>
+    <span class="title">Parent Dashboard</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="role-bar">
+    <button class="role-btn" data-r="child" onclick="switchRole(this,'home')">🧒 Child</button>
+    <button class="role-btn on" data-r="parent" onclick="switchRole(this,'parent')">👨‍👩‍👧 Parent</button>
+    <button class="role-btn" data-r="edu" onclick="switchRole(this,'educator')">🎓 Educator</button>
+  </div>
+  <div class="content" style="padding-top:18px">
+    <div style="margin-bottom:16px">
+      <div style="font-size:20px;font-weight:800;color:var(--tx)">Hi there 👋</div>
+      <div style="color:var(--sub)">Here's how practice went today</div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div style="font-weight:700;color:var(--tx);font-size:16px">📅 Today's practice</div>
+        <span class="badge b-ok">Completed</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--alt);border-radius:10px;padding:11px">
+          <div style="font-weight:800;color:var(--tx);font-size:18px" id="parent-duration">12 min</div>
+          <div style="color:var(--sub);font-size:11px;margin-top:2px">Time spent</div>
+        </div>
+        <div style="background:var(--alt);border-radius:10px;padding:11px">
+          <div style="font-weight:800;color:var(--tx);font-size:18px" id="parent-attempts">5 tries</div>
+          <div style="color:var(--sub);font-size:11px;margin-top:2px">Per letter</div>
+        </div>
+        <div style="background:var(--alt);border-radius:10px;padding:11px;grid-column:span 2">
+          <div style="font-weight:800;color:var(--tx);font-size:16px" id="parent-letters">Letters b &amp; d</div>
+          <div style="color:var(--sub);font-size:11px;margin-top:2px">Practised today</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;color:var(--tx);font-size:16px;margin-bottom:6px">🔄 Common mix-ups</div>
+      <div style="color:var(--sub);font-size:13px;margin-bottom:14px">Totally normal — these letters look very similar!</div>
+      <div class="trow">
+        <div class="tlabel">
+          <span style="font-weight:700;color:var(--tx);font-family:Georgia,serif;font-size:19px">b / d</span>
+          <span style="color:var(--sub);font-size:12px">60% of the time</span>
+        </div>
+        <div class="ttrack"><div class="tfill" style="width:60%;background:var(--warn)"></div></div>
+        <div style="color:var(--sub);font-size:12px;margin-top:3px">Reversed bump direction</div>
+      </div>
+      <div class="trow" style="margin-bottom:0">
+        <div class="tlabel">
+          <span style="font-weight:700;color:var(--tx);font-family:Georgia,serif;font-size:19px">p / q</span>
+          <span style="color:var(--sub);font-size:12px">30% of the time</span>
+        </div>
+        <div class="ttrack"><div class="tfill" style="width:30%"></div></div>
+        <div style="color:var(--sub);font-size:12px;margin-top:3px">Starting point confusion</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;color:var(--tx);font-size:16px;margin-bottom:12px">💡 What you can do today</div>
+      <div class="sstep"><div class="snum">1</div><span style="color:var(--tx);font-size:14px;padding-top:2px;line-height:1.5">Ask "which way does the bump go?" when reading together</span></div>
+      <div class="sstep"><div class="snum">2</div><span style="color:var(--tx);font-size:14px;padding-top:2px;line-height:1.5">Point out b and d in books — no pressure, just notice them</span></div>
+      <div class="sstep"><div class="snum">3</div><span style="color:var(--tx);font-size:14px;padding-top:2px;line-height:1.5">Celebrate the practice, not just the result ✨</span></div>
+    </div>
+
+    <button onclick="openSettings()" style="display:flex;align-items:center;gap:12px;width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:16px 20px;cursor:pointer;text-align:left;margin-bottom:0">
+      <span style="font-size:20px">⚙️</span>
+      <div><div style="font-weight:700;color:var(--tx);font-size:14px">Comfort settings</div><div style="color:var(--sub);font-size:12px">Theme, font size, sound &amp; motion</div></div>
+      <span style="margin-left:auto;color:var(--sub);font-size:18px">›</span>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== EDUCATOR ===================== -->
+<div class="screen" id="s-educator">
+  <div class="top-bar">
+    <div style="min-width:60px"></div>
+    <span class="title">Educator View</span>
+    <button class="btn-cog" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="role-bar">
+    <button class="role-btn" data-r="child" onclick="switchRole(this,'home')">🧒 Child</button>
+    <button class="role-btn" data-r="parent" onclick="switchRole(this,'parent')">👨‍👩‍👧 Parent</button>
+    <button class="role-btn on" data-r="edu" onclick="switchRole(this,'educator')">🎓 Educator</button>
+  </div>
+  <div class="content" style="padding-top:18px">
+    <div class="tabs">
+      <button class="tab on" onclick="eduTab('overview',this)">Overview</button>
+      <button class="tab" onclick="eduTab('assign',this)">This Week</button>
+      <button class="tab" onclick="eduTab('trends',this)">Trends</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div id="edu-overview">
+      <div class="metric-grid">
+        <div class="mc"><div class="mv" id="edu-active-count">5</div><div class="ml">Active students</div></div>
+        <div class="mc"><div class="mv" id="edu-practiced-count">3</div><div class="ml">Practised today</div></div>
+        <div class="mc"><div class="mv" style="font-size:18px">b/d</div><div class="ml">Common mix-up</div></div>
+      </div>
+      <p class="slabel">STUDENT PROGRESS</p>
+      <div id="edu-student-list">
+      <div class="sturow">
+        <div class="stuinfo"><div class="avatar">AM</div><div style="flex:1"><div style="font-weight:700;color:var(--tx);font-size:14px">Aarav M.</div><span class="badge b-warn">b/d reversal</span></div><div style="text-align:right"><div style="font-weight:800;color:var(--tx);font-size:16px">80%</div><div style="color:var(--ok);font-size:13px">↑</div></div></div>
+        <div class="prog-track"><div class="prog-fill" style="width:80%;background:var(--ok)"></div></div>
+      </div>
+      <div class="sturow">
+        <div class="stuinfo"><div class="avatar">DR</div><div style="flex:1"><div style="font-weight:700;color:var(--tx);font-size:14px">Diya R.</div><span class="badge b-warn">stroke order</span></div><div style="text-align:right"><div style="font-weight:800;color:var(--tx);font-size:16px">65%</div><div style="color:var(--ok);font-size:13px">↑</div></div></div>
+        <div class="prog-track"><div class="prog-fill" style="width:65%"></div></div>
+      </div>
+      <div class="sturow">
+        <div class="stuinfo"><div class="avatar">IP</div><div style="flex:1"><div style="font-weight:700;color:var(--tx);font-size:14px">Ishaan P.</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px"><span class="badge b-warn">b/d reversal</span><span class="badge b-warn">p/q reversal</span></div></div><div style="text-align:right"><div style="font-weight:800;color:var(--tx);font-size:16px">45%</div><div style="color:var(--sub);font-size:13px">→</div></div></div>
+        <div class="prog-track"><div class="prog-fill" style="width:45%;background:var(--warn)"></div></div>
+      </div>
+      <div class="sturow">
+        <div class="stuinfo"><div class="avatar">MS</div><div style="flex:1"><div style="font-weight:700;color:var(--tx);font-size:14px">Meera S.</div><div style="color:var(--ok);font-size:12px;margin-top:2px">On track ✓</div></div><div style="text-align:right"><div style="font-weight:800;color:var(--tx);font-size:16px">90%</div><div style="color:var(--ok);font-size:13px">↑</div></div></div>
+        <div class="prog-track"><div class="prog-fill" style="width:90%;background:var(--ok)"></div></div>
+      </div>
+      <div class="sturow">
+        <div class="stuinfo"><div class="avatar">RK</div><div style="flex:1"><div style="font-weight:700;color:var(--tx);font-size:14px">Rohan K.</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px"><span class="badge b-er">b/d reversal</span><span class="badge b-warn">starting point</span></div></div><div style="text-align:right"><div style="font-weight:800;color:var(--tx);font-size:16px">30%</div><div style="color:var(--er);font-size:13px">↓</div></div></div>
+        <div class="prog-track"><div class="prog-fill" style="width:30%;background:var(--er)"></div></div>
+      </div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="exportCSV()">⬇&nbsp; Export CSV report</button>
+    </div>
+
+    <!-- THIS WEEK -->
+    <div id="edu-assign" style="display:none">
+
+      <!-- Classroom focus -->
+      <div class="card">
+        <div style="font-weight:700;color:var(--tx);font-size:16px;margin-bottom:4px">📚 This week's classroom focus</div>
+        <div style="color:var(--sub);font-size:13px;margin-bottom:16px">What you're exploring together in class right now</div>
+        <div id="edu-activities-list"><div class="arow">
+          <div class="acheck y">✓</div>
+          <div>
+            <div style="font-weight:700;color:var(--tx);font-size:14px">Letters b &amp; d</div>
+            <div style="color:var(--sub);font-size:12px;margin-top:2px">Visual discrimination — bump direction awareness</div>
+          </div>
+        </div>
+        <div class="arow">
+          <div class="acheck n"></div>
+          <div>
+            <div style="font-weight:700;color:var(--tx);font-size:14px">Letters p &amp; q</div>
+            <div style="color:var(--sub);font-size:12px;margin-top:2px">Below-the-line letter shapes</div>
+          </div>
+        </div>
+        <div class="arow">
+          <div class="acheck n"></div>
+          <div>
+            <div style="font-weight:700;color:var(--tx);font-size:14px">Numbers 1–5</div>
+            <div style="color:var(--sub);font-size:12px;margin-top:2px">Number formation and counting</div>
+          </div>
+        </div>
+        <div class="arow">
+          <div class="acheck n"></div>
+          <div>
+            <div style="font-weight:700;color:var(--tx);font-size:14px">Sequencing patterns</div>
+            <div style="color:var(--sub);font-size:12px;margin-top:2px">What comes next — shapes and colours</div>
+          </div>
+        </div>
+        </div><button class="btn btn-ac" style="margin-top:16px;margin-bottom:0" onclick="shareActivitiesWithParents()">Share focus with parents →</button>
+      </div>
+
+      <!-- Optional at-home ideas for parents -->
+      <div class="card">
+        <div style="font-weight:700;color:var(--tx);font-size:16px;margin-bottom:4px">🌱 Optional ideas for parents</div>
+        <div style="color:var(--sub);font-size:13px;margin-bottom:16px">Low-pressure, playful moments — only if the child feels like it. No targets, no deadlines.</div>
+        <div class="sstep">
+          <div class="snum">1</div>
+          <span style="color:var(--tx);font-size:14px;padding-top:2px;line-height:1.55">Point out b and d while reading a bedtime book together — casually, not as a test</span>
+        </div>
+        <div class="sstep">
+          <div class="snum">2</div>
+          <span style="color:var(--tx);font-size:14px;padding-top:2px;line-height:1.55">Try drawing letters in sand, on a foggy window, or with finger paints — movement helps memory</span>
+        </div>
+        <div class="sstep">
+          <div class="snum">3</div>
+          <span style="color:var(--tx);font-size:14px;padding-top:2px;line-height:1.55">Count objects around the house — stairs, spoons, shoes — whenever it comes up naturally</span>
+        </div>
+        <div style="background:rgba(58,148,98,.07);border-radius:10px;padding:11px 13px;margin-top:14px;font-size:12px;color:var(--sub);line-height:1.6">
+          ✅ Parents will see these as gentle suggestions in their dashboard — not tasks to complete
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TRENDS -->
+    <div id="edu-trends" style="display:none">
+      <div class="card">
+        <div style="font-weight:700;color:var(--tx);margin-bottom:16px">Error patterns this week</div>
+        <div id="edu-error-list">
+        <div class="trow"><div class="tlabel"><span style="font-weight:600;color:var(--tx);font-size:14px">b/d reversal</span><span style="color:var(--sub);font-size:12px">38 instances</span></div><div class="ttrack"><div class="tfill" style="width:72%"></div></div></div>
+        <div class="trow"><div class="tlabel"><span style="font-weight:600;color:var(--tx);font-size:14px">Stroke direction</span><span style="color:var(--sub);font-size:12px">22 instances</span></div><div class="ttrack"><div class="tfill" style="width:42%"></div></div></div>
+        <div class="trow"><div class="tlabel"><span style="font-weight:600;color:var(--tx);font-size:14px">Starting point</span><span style="color:var(--sub);font-size:12px">15 instances</span></div><div class="ttrack"><div class="tfill" style="width:28%"></div></div></div>
+        <div class="trow" style="margin-bottom:10px"><div class="tlabel"><span style="font-weight:600;color:var(--tx);font-size:14px">p/q reversal</span><span style="color:var(--sub);font-size:12px">11 instances</span></div><div class="ttrack"><div class="tfill" style="width:21%"></div></div></div>
+        </div><div style="color:var(--sub);font-size:12px;padding:10px;background:var(--acl);border-radius:10px" id="edu-error-insight">💡 Loading error data...</div>
+      </div>
+      <div class="card">
+        <div style="font-weight:700;color:var(--tx);margin-bottom:4px">Practice days this week</div>
+        <div class="bar-chart" id="edu-bar-chart">
+          <div class="bcol"><div class="bbar" style="height:70%"></div><div class="bday">M</div></div>
+          <div class="bcol"><div class="bbar" style="height:90%"></div><div class="bday">T</div></div>
+          <div class="bcol"><div class="bbar" style="height:50%"></div><div class="bday">W</div></div>
+          <div class="bcol"><div class="bbar" style="height:85%"></div><div class="bday">T</div></div>
+          <div class="bcol"><div class="bbar empty" style="height:4px"></div><div class="bday">F</div></div>
+          <div class="bcol"><div class="bbar empty" style="height:4px"></div><div class="bday">S</div></div>
+          <div class="bcol"><div class="bbar empty" style="height:4px"></div><div class="bday">S</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /device -->
+
+
+
+</div><!-- /device -->
+
+<script>
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  NeuroFlow — Backend API Bridge
+//  All API calls proxy through Flask → Java Spring Boot
+// ═══════════════════════════════════════════════════════════════════════════
+
+const API = {
+  async get(path) {
+    try {
+      const r = await fetch(path);
+      return await r.json();
+    } catch(e) { console.warn('API GET failed:', path, e); return null; }
+  },
+  async post(path, data) {
+    try {
+      const r = await fetch(path, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      return await r.json();
+    } catch(e) { console.warn('API POST failed:', path, e); return null; }
+  },
+  async patch(path, data) {
+    try {
+      const r = await fetch(path, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data || {})
+      });
+      return await r.json();
+    } catch(e) { console.warn('API PATCH failed:', path, e); return null; }
+  },
+  async del(path) {
+    try {
+      const r = await fetch(path, { method: 'DELETE' });
+      return await r.json();
+    } catch(e) { console.warn('API DELETE failed:', path, e); return null; }
+  }
+};
+
+// ── App State (mirrors Java AppState but lives in the browser) ──────────────
+const AppState = {
+  role: 'child',
+  userId: null,
+  studentId: 1,
+  studentName: '',
+  currentLetter: 'b',
+  sessionAttempts: 0,
+  sessionCorrect: 0,
+  sessionStartMs: 0,
+  gripperConnected: false,
+
+  startSession() { this.sessionAttempts = 0; this.sessionCorrect = 0; this.sessionStartMs = Date.now(); },
+  sessionDurationSec() { return Math.round((Date.now() - this.sessionStartMs) / 1000); }
+};
+
+// ── Login ────────────────────────────────────────────────────────────────────
+async function loginAs(role, pin, studentId) {
+  const payload = { role };
+  if (pin)       payload.pin = pin;
+  if (studentId) payload.studentId = studentId;
+
+  const resp = await API.post('/api/auth/login', payload);
+  if (!resp || !resp.ok) {
+    alert(resp?.error || 'Login failed');
+    return false;
+  }
+  AppState.role      = resp.role;
+  AppState.userId    = resp.user?.userId;
+  AppState.studentId = resp.student?.studentId || studentId || 1;
+  AppState.currentLetter = resp.student?.currentLetter || 'b';
+  AppState.studentName   = resp.user?.name || '';
+
+  // Navigate to the right screen
+  if (role === 'child')    { loadHomeData();    goTo('home'); }
+  if (role === 'parent')   { loadParentData();  goTo('parent'); }
+  if (role === 'educator') { loadEducatorData();goTo('educator'); }
+  return true;
+}
+
+// ── Home screen data ─────────────────────────────────────────────────────────
+async function loadHomeData() {
+  const sid = AppState.studentId;
+  if (!sid) return;
+  const d = await API.get(`/api/students/${sid}/home-data`);
+  if (!d) return;
+
+  const s = d.student;
+  AppState.currentLetter = s.currentLetter || 'b';
+
+  // Update greeting / streak display if elements exist
+  const streakEl = document.getElementById('home-streak');
+  if (streakEl) streakEl.textContent = s.streakDays + ' day streak 🔥';
+
+  const progEl = document.getElementById('home-progress');
+  if (progEl) { progEl.style.width = s.weeklyProgress + '%'; }
+
+  const progTxt = document.getElementById('home-progress-txt');
+  if (progTxt) progTxt.textContent = s.weeklyProgress + '%';
+
+  const letterEl = document.getElementById('home-letter');
+  if (letterEl) letterEl.textContent = '"' + s.currentLetter + '"';
+
+  const nameEl = document.getElementById('home-name');
+  if (nameEl) nameEl.textContent = s.name.split(' ')[0];
+}
+
+// ── Parent dashboard data ────────────────────────────────────────────────────
+async function loadParentData() {
+  const sid = AppState.studentId || 1;
+  const d = await API.get(`/api/analytics/parent-summary/${sid}`);
+  if (!d) return;
+
+  const durEl = document.getElementById('parent-duration');
+  if (durEl) durEl.textContent = d.todayDurationMinutes + ' min';
+
+  const attEl = document.getElementById('parent-attempts');
+  if (attEl) attEl.textContent = d.todayAttempts + ' tries';
+
+  const letEl = document.getElementById('parent-letters');
+  if (letEl) letEl.textContent = 'Letters ' + (Array.isArray(d.practicedLetters) ? d.practicedLetters.join(' & ') : Object.keys(d.practicedLetters || {}).join(' & '));
+
+  // Error bars
+  const errors = d.weeklyErrors || {};
+  const errKeys = Object.keys(errors);
+  const maxErr  = Math.max(...Object.values(errors), 1);
+  errKeys.forEach(key => {
+    const pct = Math.round(errors[key] / Object.values(errors).reduce((a,b) => a+b, 1) * 100);
+    const barEl = document.getElementById('err-' + key.replace(/[^a-z]/gi,'-'));
+    const txtEl = document.getElementById('err-pct-' + key.replace(/[^a-z]/gi,'-'));
+    if (barEl) barEl.style.width = pct + '%';
+    if (txtEl) txtEl.textContent = pct + '% of the time';
+  });
+}
+
+// ── Educator data ────────────────────────────────────────────────────────────
+async function loadEducatorData() {
+  // Stats
+  const stats = await API.get('/api/students/stats/overview');
+  if (stats) {
+    const aEl = document.getElementById('edu-active-count');
+    if (aEl) aEl.textContent = stats.activeStudents;
+    const pEl = document.getElementById('edu-practiced-count');
+    if (pEl) pEl.textContent = stats.practicedToday;
+  }
+
+  // Students list
+  const students = await API.get('/api/students/by-educator/7');
+  if (students && Array.isArray(students)) {
+    renderStudentList(students);
+  }
+
+  // Activities
+  await loadActivities();
+
+  // Error trends
+  const errors = await API.get('/api/analytics/errors/weekly');
+  if (errors) renderErrorTrends(errors);
+
+  // Weekly bar chart
+  const weekData = await API.get('/api/practice/weekly-days/' + (AppState.studentId || 1));
+  if (weekData?.days) renderWeeklyBars(weekData.days);
+}
+
+function renderStudentList(students) {
+  const container = document.getElementById('edu-student-list');
+  if (!container) return;
+  container.innerHTML = '';
+  const maxProg = Math.max(...students.map(s => s.weeklyProgress), 1);
+  students.forEach(s => {
+    const trendColor = s.trend === '↑' ? 'var(--ok)' : s.trend === '↓' ? 'var(--er)' : 'var(--sub)';
+    const progColor  = s.weeklyProgress >= 70 ? 'var(--ok)' : s.weeklyProgress < 40 ? 'var(--er)' : 'var(--warn)';
+    const badgeClass = s.weeklyProgress >= 70 ? 'b-ok' : s.weeklyProgress < 40 ? 'b-er' : 'b-warn';
+    const issue = s.primaryIssue ? `<span class="badge ${badgeClass}">${s.primaryIssue}</span>` : `<div style="color:var(--ok);font-size:12px;margin-top:2px">On track ✓</div>`;
+    container.innerHTML += `
+      <div class="sturow">
+        <div class="stuinfo">
+          <div class="avatar">${s.initials}</div>
+          <div style="flex:1">
+            <div style="font-weight:700;color:var(--tx);font-size:14px">${s.name}</div>
+            ${issue}
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:800;color:var(--tx);font-size:16px">${s.weeklyProgress}%</div>
+            <div style="color:${trendColor};font-size:13px">${s.trend}</div>
+          </div>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:${s.weeklyProgress}%;background:${progColor}"></div></div>
+      </div>`;
+  });
+}
+
+function renderErrorTrends(errors) {
+  const container = document.getElementById('edu-error-list');
+  if (!container) return;
+  container.innerHTML = '';
+  const total = Object.values(errors).reduce((a,b) => a+b, 0) || 1;
+  const maxV  = Math.max(...Object.values(errors), 1);
+  Object.entries(errors).forEach(([type, count]) => {
+    const pct = Math.round(count / maxV * 100);
+    container.innerHTML += `
+      <div class="trow">
+        <div class="tlabel">
+          <span style="font-weight:600;color:var(--tx);font-size:14px">${type}</span>
+          <span style="color:var(--sub);font-size:12px">${count} instances</span>
+        </div>
+        <div class="ttrack"><div class="tfill" style="width:${pct}%"></div></div>
+      </div>`;
+  });
+  // Dominant error insight
+  const top = Object.keys(errors)[0];
+  const insightEl = document.getElementById('edu-error-insight');
+  if (insightEl && top) insightEl.textContent = `💡 ${top} is most common — consider making it this week's classroom focus`;
+}
+
+function renderWeeklyBars(days) {
+  const container = document.getElementById('edu-bar-chart');
+  if (!container) return;
+  const labels = ['S','M','T','W','T','F','S'];
+  const maxV = Math.max(...days.map(d => d.count), 1);
+  container.innerHTML = '';
+  days.forEach((d, i) => {
+    const pct = Math.round(d.count / maxV * 100);
+    const isEmpty = d.count === 0;
+    container.innerHTML += `
+      <div class="bcol">
+        <div class="bbar ${isEmpty ? 'empty' : ''}" style="height:${isEmpty ? 4 : pct}%"></div>
+        <div class="bday">${labels[i]}</div>
+      </div>`;
+  });
+}
+
+async function loadActivities() {
+  const acts = await API.get('/api/analytics/activities?educatorId=7');
+  if (!acts || !Array.isArray(acts)) return;
+  const container = document.getElementById('edu-activities-list');
+  if (!container) return;
+  container.innerHTML = '';
+  acts.forEach(a => {
+    const checkClass = a.completed ? 'y' : 'n';
+    const checkMark  = a.completed ? '✓' : '';
+    container.innerHTML += `
+      <div class="arow" id="act-row-${a.id}">
+        <div class="acheck ${checkClass}" id="act-check-${a.id}" style="cursor:pointer"
+             onclick="toggleActivity(${a.id}, ${!a.completed})">${checkMark}</div>
+        <div>
+          <div style="font-weight:700;color:var(--tx);font-size:14px">${a.title}</div>
+          <div style="color:var(--sub);font-size:12px;margin-top:2px">${a.description || ''}</div>
+        </div>
+      </div>`;
+  });
+}
+
+async function toggleActivity(id, completed) {
+  await API.patch(`/api/analytics/activities/${id}/complete`, { completed });
+  await loadActivities();
+}
+
+async function shareActivitiesWithParents() {
+  const acts = await API.get('/api/analytics/activities?educatorId=7');
+  if (!acts) return;
+  for (const a of acts) {
+    if (!a.sharedWithParents) {
+      await API.patch(`/api/analytics/activities/${a.id}/share`, { shared: true });
+    }
+  }
+  alert('Activities shared with parents! ✓');
+}
+
+function exportCSV() {
+  window.open('/api/analytics/export/csv', '_blank');
+}
+
+// ── Practice / Try screen ────────────────────────────────────────────────────
+let tryState = {
+  attempts: 0,
+  correct: 0,
+  startMs: 0,
+  currentStep: 1,
+  totalSteps: 5,
+  pendingResult: null,
+};
+
+function tryStartSession() {
+  tryState.attempts = 0;
+  tryState.correct  = 0;
+  tryState.startMs  = Date.now();
+  tryState.currentStep = 1;
+}
+
+async function simulateLetterAttempt() {
+  // Call backend classify
+  const result = await API.post('/api/practice/classify', {
+    targetLetter: AppState.currentLetter,
+    studentId: AppState.studentId
+  });
+  if (!result) return;
+  tryState.pendingResult = result;
+  tryState.attempts++;
+
+  if (result.isCorrect) {
+    tryState.correct++;
+    tryState.currentStep = Math.min(tryState.currentStep + 1, tryState.totalSteps);
+    updateTryProgress();
+    if (tryState.currentStep >= tryState.totalSteps) {
+      await finishTrySession(true);
+      goTo('win');
+    } else {
+      pauseTry(); // show success state briefly
+    }
+  } else {
+    // Wrong — go to guide screen
+    await finishTrySession(false);
+    goTo('guide');
+  }
+}
+
+function updateTryProgress() {
+  const prog = document.getElementById('try-prog');
+  const step = document.getElementById('try-step');
+  if (prog) prog.style.width = (tryState.currentStep / tryState.totalSteps * 100) + '%';
+  if (step) step.textContent = tryState.currentStep + ' of ' + tryState.totalSteps;
+}
+
+async function finishTrySession(success) {
+  const durationSec = Math.round((Date.now() - tryState.startMs) / 1000);
+  const result = tryState.pendingResult;
+  await API.post('/api/practice/session', {
+    studentId:      AppState.studentId,
+    targetLetter:   AppState.currentLetter,
+    detectedLetter: result?.detectedLetter || AppState.currentLetter,
+    isCorrect:      success,
+    confidence:     result?.confidence || 0.9,
+    attempts:       tryState.attempts,
+    durationSeconds: durationSec
+  });
+
+  // Update win screen stats
+  const attEl = document.getElementById('win-attempts');
+  if (attEl) attEl.textContent = tryState.attempts;
+  const durEl = document.getElementById('win-duration');
+  if (durEl) durEl.textContent = Math.round(durationSec / 60) + ' min';
+  const accEl = document.getElementById('win-accuracy');
+  if (accEl) accEl.textContent = tryState.attempts > 0
+    ? Math.round(tryState.correct / tryState.attempts * 100) + '%' : '—';
+
+  // Increment streak
+  await API.patch(`/api/students/${AppState.studentId}/streak`);
+}
+
+// ── Role switcher ─────────────────────────────────────────────────────────────
+async function switchRoleWithLogin(role) {
+  if (role === 'parent') {
+    const pin = prompt('Enter parent PIN:');
+    if (!pin) return;
+    await loginAs('parent', pin, null);
+  } else if (role === 'educator') {
+    const pin = prompt('Enter educator PIN:');
+    if (!pin) return;
+    await loginAs('educator', pin, null);
+  } else {
+    // Switch back to child — just navigate
+    AppState.role = 'child';
+    loadHomeData();
+    goTo('home');
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('on'));
+    document.querySelector('.role-btn[data-r="child"]')?.classList.add('on');
+  }
+}
+
+// ── On page load ──────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderRobot();
+  // Auto-load data for initial screen
+  loadHomeData();
+  updateTryProgress();
+});
+
+</script>
+<script>
+
+// ── READING MODES ──
+const MODES={
+  default:{
+    theme:'',themeBg:'#F6F1E8',themeAc:'#4E8FC5',
+    size:'16px',ls:'0em',lh:'1.6',ff:"'Segoe UI',system-ui,sans-serif",
+    motion:true,sound:true,haptic:'high',
+    label:'Default',
+    note:''
+  },
+  dyslexia:{
+    theme:'t-warm',themeBg:'#F7EFE3',themeAc:'#C98F6B',
+    size:'18px',ls:'0.05em',lh:'1.95',ff:"'Lexend','Segoe UI',sans-serif",
+    motion:false,sound:true,haptic:'high',
+    label:'Dyslexia',
+    note:'💡 Lexend font reduces visual crowding. Warm background lowers contrast strain. Extra spacing between letters and lines helps word recognition.'
+  },
+  adhd:{
+    theme:'t-blue',themeBg:'#EEF4FA',themeAc:'#5B8FB9',
+    size:'16px',ls:'0.01em',lh:'1.75',ff:"'Segoe UI',system-ui,sans-serif",
+    motion:false,sound:false,haptic:'low',
+    label:'ADHD Focus',
+    note:'💡 Calm blue tones reduce visual overstimulation. Animations and sounds are turned off to minimise distraction. Clean layout keeps focus on one task at a time.'
+  },
+  sensory:{
+    theme:'t-dark',themeBg:'#2A2A2A',themeAc:'#7BA8F0',
+    size:'16px',ls:'0.02em',lh:'1.8',ff:"'Segoe UI',system-ui,sans-serif",
+    motion:false,sound:false,haptic:'low',
+    label:'Sensory-Sensitive',
+    note:'💡 Dark background reduces brightness and visual noise. All sounds and animations are off. Gentle haptic only — no loud or surprising feedback.'
+  },
+  vision:{
+    theme:'t-dark',themeBg:'#2A2A2A',themeAc:'#7BA8F0',
+    size:'21px',ls:'0.02em',lh:'2.0',ff:"'Lexend','Segoe UI',sans-serif",
+    motion:true,sound:true,haptic:'high',
+    label:'Low Vision',
+    note:'💡 Maximum text size and high-contrast dark theme. Bold Lexend font improves legibility. Increased line height gives each word more breathing room.'
+  }
+};
+
+let activeMode='default';
+
+function setReadingMode(key,btn){
+  activeMode=key;
+  const m=MODES[key];
+  const app=document.getElementById('app');
+
+  // Theme
+  app.className='device'+(m.theme?' '+m.theme:'');
+  document.querySelectorAll('.theme-opt').forEach(b=>{b.classList.remove('sel');b.style.borderColor='transparent';});
+  // Try to highlight matching theme button
+  document.querySelectorAll('.theme-opt').forEach(b=>{
+    if(b.style.background===m.themeBg){b.classList.add('sel');b.style.borderColor=m.themeAc;}
+  });
+
+  // Font & spacing on app element
+  app.style.setProperty('--ls',m.ls);
+  app.style.setProperty('--lh',m.lh);
+  app.style.setProperty('--ff',m.ff);
+  app.style.fontSize=m.size;
+
+  // Sync size buttons
+  document.querySelectorAll('.size-btn').forEach(b=>{b.classList.remove('on');b.classList.add('off');});
+  const sizeMap={'13px':0,'16px':1,'18px':1,'21px':2};
+  const sbtns=document.querySelectorAll('.size-btn');
+  const si=sizeMap[m.size]??1;
+  if(sbtns[si]){sbtns[si].classList.remove('off');sbtns[si].classList.add('on');}
+
+  // Motion & sound toggles
+  const toggles=document.querySelectorAll('.acessrow .toggle');
+  if(toggles[0]) setToggleState(toggles[0],m.motion);
+  if(toggles[1]) setToggleState(toggles[1],m.sound);
+
+  // Haptic
+  const hh=document.getElementById('hap-high'),hl=document.getElementById('hap-low');
+  if(m.haptic==='high'){
+    hh.style.background='var(--ac)';hh.style.color='#fff';
+    hl.style.background='var(--alt)';hl.style.color='var(--sub)';
+  } else {
+    hl.style.background='var(--ac)';hl.style.color='#fff';
+    hh.style.background='var(--alt)';hh.style.color='var(--sub)';
+  }
+
+  // Card highlight
+  document.querySelectorAll('.rm-card').forEach(c=>c.classList.remove('sel'));
+  btn.classList.add('sel');
+
+  // Badge
+  const badge=document.getElementById('rm-active-badge');
+  const badgeText=document.getElementById('rm-badge-text');
+  if(key==='default'){badge.style.display='none';}
+  else{badge.style.display='inline-flex';badgeText.textContent=m.label+' mode';}
+
+  // Note
+  const noteEl=document.getElementById('rm-note');
+  if(m.note){noteEl.style.display='block';noteEl.textContent=m.note;}
+  else{noteEl.style.display='none';}
+}
+
+function setToggleState(btn,on){
+  btn.classList.toggle('on',on);
+  btn.classList.toggle('off',!on);
+}
+
+// ── NAVIGATION ──
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  if(id==='try') resetTry();
+  if(id==='watch') resetWatch();
+  if(id==='numwatch') resetNumWatch();
+  if(id==='think-robot'){ resetRobot(); renderRobot(); }
+  if(id==='think-memory'){ memPhase='idle'; memInput=[]; [0,1,2].forEach(i=>{const f=document.getElementById('mf'+i);if(f)f.style.opacity='1';}); [0,1,2].forEach(i=>{const b=document.getElementById('memb'+i);if(b){b.disabled=true;b.style.opacity='.4';b.style.borderColor='';b.style.background='';}}); const s=document.getElementById('mem-status');if(s)s.textContent='Look carefully...'; const fb=document.getElementById('mem-feedback');if(fb)fb.textContent=''; const btn=document.getElementById('mem-start-btn');if(btn){btn.textContent='▶ Show me the flowers!';btn.style.display='block';} }
+  if(id==='think-detective') tDetReset();
+  if(id==='think-story') storyReset();
+}
+
+function switchRole(btn,screen){
+  const role = btn.dataset.r || 'child';
+  if (role === 'parent' || role === 'educator') {
+    switchRoleWithLogin(role);
+    return;
+  }
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  goTo(screen);
+}
+
+// ── SETTINGS ──
+function openSettings(){ document.getElementById('overlay').classList.add('show'); }
+function closeSettings(){ document.getElementById('overlay').classList.remove('show'); }
+function overlayClick(e){ if(e.target===document.getElementById('overlay')) closeSettings(); }
+
+function setTheme(cls,bg,ac,btn){
+  const app=document.getElementById('app');
+  app.className='device'+(cls?' '+cls:'');
+  document.querySelectorAll('.theme-opt').forEach(b=>{b.classList.remove('sel');b.style.borderColor='transparent';});
+  btn.classList.add('sel');
+  btn.style.borderColor=ac;
+}
+
+function setSize(px,btn){
+  document.getElementById('app').style.fontSize=px;
+  document.querySelectorAll('.size-btn').forEach(b=>{b.classList.remove('on');b.classList.add('off');});
+  btn.classList.remove('off');btn.classList.add('on');
+}
+
+function flipToggle(btn){
+  btn.classList.toggle('on');
+  btn.classList.toggle('off');
+}
+
+function setHaptic(activeBtn,otherId){
+  activeBtn.style.background='var(--ac)';activeBtn.style.color='#fff';
+  const o=document.getElementById(otherId);
+  o.style.background='var(--alt)';o.style.color='var(--sub)';
+}
+
+// ── WATCH SCREEN ──
+let watchBusy=false;
+
+function resetWatch(){
+  watchBusy=false;
+  const s1=document.getElementById('ws1');
+  const s2=document.getElementById('ws2');
+  const startDot=document.getElementById('w-startdot');
+  if(!s1||!s2) return;
+
+  // Kill transitions before resetting so it snaps instantly
+  s1.style.transition='none';
+  s2.style.transition='none';
+
+  const l1=s1.getTotalLength();
+  const l2=s2.getTotalLength();
+  s1.style.strokeDasharray=l1;
+  s1.style.strokeDashoffset=l1;
+  s2.style.strokeDasharray=l2;
+  s2.style.strokeDashoffset=l2;
+  s1.style.stroke='var(--alt)';
+  s2.style.stroke='var(--alt)';
+
+  if(startDot) startDot.style.display='none';
+  document.getElementById('wstatus').textContent='Press play to see how';
+  document.getElementById('wstatus').style.color='var(--sub)';
+  [0,1,2].forEach(i=>document.getElementById('sd'+i).classList.remove('lit'));
+  document.getElementById('wbtns1').style.display='block';
+  document.getElementById('wbtns2').style.display='none';
+}
+
+function playWatch(){
+  if(watchBusy) return;
+  watchBusy=true;
+
+  const s1=document.getElementById('ws1');
+  const s2=document.getElementById('ws2');
+  const st=document.getElementById('wstatus');
+  const startDot=document.getElementById('w-startdot');
+
+  // Setup dash arrays using real path length
+  const l1=s1.getTotalLength();
+  const l2=s2.getTotalLength();
+  s1.style.transition='none';
+  s2.style.transition='none';
+  s1.style.strokeDasharray=l1;
+  s1.style.strokeDashoffset=l1;
+  s2.style.strokeDasharray=l2;
+  s2.style.strokeDashoffset=l2;
+  s1.style.stroke='var(--alt)';
+  s2.style.stroke='var(--alt)';
+  [0,1,2].forEach(i=>document.getElementById('sd'+i).classList.remove('lit'));
+
+  // Phase 0 — show start dot with label
+  st.style.color='var(--ac)';
+  st.textContent='● Start here — top of the letter';
+  if(startDot) startDot.style.display='block';
+
+  // Phase 1 — draw stem downward
+  setTimeout(()=>{
+    if(startDot) startDot.style.display='none';
+    s1.style.stroke='var(--ac)';
+    // force reflow so transition picks up from current dashoffset
+    s1.getBoundingClientRect();
+    s1.style.transition='stroke-dashoffset 0.9s ease, stroke 0.2s';
+    s1.style.strokeDashoffset=0;
+    document.getElementById('sd0').classList.add('lit');
+    st.textContent='↓ Drawing the stem all the way down...';
+  },800);
+
+  // Phase 2 — draw bowl bump to the right
+  setTimeout(()=>{
+    s2.style.stroke='var(--ac)';
+    s2.getBoundingClientRect();
+    s2.style.transition='stroke-dashoffset 1.1s ease, stroke 0.2s';
+    s2.style.strokeDashoffset=0;
+    document.getElementById('sd1').classList.add('lit');
+    st.textContent='⤵ Adding the bump to the RIGHT...';
+  },2000);
+
+  // Phase 3 — complete, show success
+  setTimeout(()=>{
+    document.getElementById('sd2').classList.add('lit');
+    s1.style.transition='stroke 0.3s';
+    s2.style.transition='stroke 0.3s';
+    s1.style.stroke='var(--tx)';
+    s2.style.stroke='var(--tx)';
+    st.style.color='var(--ok)';
+    st.textContent='✓ Got it? Now it\'s your turn!';
+    document.getElementById('wbtns1').style.display='none';
+    document.getElementById('wbtns2').style.display='block';
+    watchBusy=false;
+  },3400);
+}
+
+function replayWatch(){ resetWatch(); setTimeout(playWatch,120); }
+
+// ── TRY SCREEN ──
+function resetTry(){
+  show('try-idle');hide('try-live');hide('try-paused-txt');
+  document.getElementById('try-paper').classList.remove('active');
+  show('try-s0');hide('try-s1');hide('try-s2');
+}
+function startTry(){
+  document.getElementById('try-paper').classList.add('active');
+  hide('try-idle');show('try-live');
+  hide('try-s0');show('try-s1');
+}
+function pauseTry(){
+  hide('try-live');show('try-paused-txt');
+  hide('try-s1');show('try-s2');
+}
+function resumeTry(){
+  show('try-live');hide('try-paused-txt');
+  hide('try-s2');show('try-s1');
+}
+
+// ── EDUCATOR TABS ──
+function eduTab(name,btn){
+  ['overview','assign','trends'].forEach(t=>{
+    const el=document.getElementById('edu-'+t);
+    if(el) el.style.display= t===name?'block':'none';
+  });
+  document.querySelectorAll('#s-educator .tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ── PHONICS SOUND ──
+function speakLetter() {
+  if(!window.speechSynthesis) return;
+  const phonics = ['buh'];
+  window.speechSynthesis.cancel();
+  phonics.forEach((sound, i) => {
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(sound);
+      u.rate = 0.72; u.pitch = 1.1; u.volume = 1;
+      const voices = window.speechSynthesis.getVoices();
+      const nice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Karen') || v.name.includes('Google')));
+      if(nice) u.voice = nice;
+      window.speechSynthesis.speak(u);
+    }, i * 900);
+  });
+  const btn = document.getElementById('speak-btn');
+  if(btn){ btn.style.color='var(--ok)'; setTimeout(()=>{ btn.style.color='var(--ac)'; }, 1000); }
+}
+
+function speakNumber() {
+  if(!window.speechSynthesis) return;
+  const names = ['zero','one','two','three','four','five','six','seven','eight','nine'];
+  const word = names[currentNum] || String(currentNum);
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.rate = 0.72; u.pitch = 1.1; u.volume = 1;
+  const voices = window.speechSynthesis.getVoices();
+  const nice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Karen') || v.name.includes('Google')));
+  if(nice) u.voice = nice;
+  window.speechSynthesis.speak(u);
+  const btn = document.getElementById('speak-num-btn');
+  if(btn){ btn.style.color='var(--ok)'; setTimeout(()=>{ btn.style.color='var(--ac)'; }, 1000); }
+}
+
+// ── THINKING SKILLS GAMES ──
+
+// Letter Detective
+function tDetTap(el, letter) {
+  if(el.dataset.tapped) return;
+  el.dataset.tapped = '1';
+  const fb = document.getElementById('tdet-feedback');
+  if(letter === 'b') {
+    el.style.background = 'rgba(58,148,98,.18)';
+    el.style.borderColor = 'var(--ok)';
+    el.style.color = 'var(--ok)';
+    fb.style.color = 'var(--ok)';
+    fb.textContent = '✓ Yes! That\'s a b!';
+  } else {
+    el.style.background = 'rgba(200,92,58,.1)';
+    el.style.color = 'var(--sub)';
+    el.style.opacity = '0.45';
+    fb.style.color = 'var(--warn)';
+    fb.textContent = 'Look carefully — that\'s a "' + letter + '", not a "b" 👀';
+  }
+}
+function tDetReset() {
+  document.querySelectorAll('#s-think-detective [onclick^="tDetTap"]').forEach(el => {
+    el.removeAttribute('data-tapped');
+    el.style.background = '';
+    el.style.borderColor = '';
+    el.style.color = '';
+    el.style.opacity = '';
+  });
+  const fb = document.getElementById('tdet-feedback');
+  fb.style.color = 'var(--sub)';
+  fb.textContent = 'Tap the b\'s!';
+}
+
+// Sound Explorer
+function tSoundTap(btn, correct) {
+  const fb = document.getElementById('tsound-feedback');
+  document.querySelectorAll('#s-think-sound button[onclick^="tSoundTap"]').forEach(b => b.disabled = true);
+  if(correct) {
+    btn.style.borderColor = 'var(--ok)';
+    btn.style.background = 'rgba(58,148,98,.12)';
+    fb.style.color = 'var(--ok)';
+    fb.textContent = '🎉 Yes! Banana starts with "B"!';
+  } else {
+    btn.style.borderColor = 'var(--er)';
+    btn.style.background = 'rgba(200,92,58,.08)';
+    fb.style.color = 'var(--warn)';
+    fb.textContent = 'Not quite — try listening again 🎧';
+    setTimeout(()=>{ document.querySelectorAll('#s-think-sound button[onclick^="tSoundTap"]').forEach(b => { b.disabled=false; b.style.borderColor=''; b.style.background=''; }); fb.textContent='Tap the picture!'; fb.style.color='var(--sub)'; }, 1400);
+  }
+}
+
+// Pattern Train
+function tPatTap(btn, correct) {
+  const fb = document.getElementById('tpat-feedback');
+  document.querySelectorAll('#s-think-pattern button[onclick^="tPatTap"]').forEach(b => b.disabled = true);
+  if(correct) {
+    btn.style.borderColor = 'var(--ok)';
+    btn.style.background = 'rgba(58,148,98,.12)';
+    fb.style.color = 'var(--ok)';
+    fb.textContent = '🎉 That\'s right — the pattern repeats!';
+  } else {
+    btn.style.borderColor = 'var(--er)';
+    btn.style.background = 'rgba(200,92,58,.08)';
+    fb.style.color = 'var(--warn)';
+    fb.textContent = 'Look at the pattern again — what keeps repeating? 🔍';
+    setTimeout(()=>{ document.querySelectorAll('#s-think-pattern button[onclick^="tPatTap"]').forEach(b => { b.disabled=false; b.style.borderColor=''; b.style.background=''; }); fb.textContent='Choose the missing piece!'; fb.style.color='var(--sub)'; }, 1400);
+  }
+}
+
+// Robot Directions
+let robotPos = {r:0, c:0};
+const ROBOT_GOAL = {r:2, c:3};
+function renderRobot() {
+  const grid = document.getElementById('robot-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  for(let r=0;r<4;r++) for(let c=0;c<4;c++) {
+    const cell = document.createElement('div');
+    cell.style.cssText = 'height:62px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;transition:background .2s;';
+    const isRobot = (r===robotPos.r && c===robotPos.c);
+    const isGoal  = (r===ROBOT_GOAL.r && c===ROBOT_GOAL.c);
+    cell.style.background = isRobot ? 'rgba(155,126,212,.25)' : isGoal ? 'rgba(58,148,98,.15)' : 'var(--alt)';
+    cell.textContent = isRobot ? '🤖' : isGoal ? '⭐' : '';
+    grid.appendChild(cell);
+  }
+}
+function moveRobot(dir) {
+  const fb = document.getElementById('trobot-feedback');
+  let {r,c} = robotPos;
+  if(dir==='up')    r = Math.max(0,r-1);
+  if(dir==='down')  r = Math.min(3,r+1);
+  if(dir==='left')  c = Math.max(0,c-1);
+  if(dir==='right') c = Math.min(3,c+1);
+  robotPos = {r,c};
+  renderRobot();
+  if(r===ROBOT_GOAL.r && c===ROBOT_GOAL.c) {
+    fb.style.color='var(--ok)';
+    fb.textContent = '🎉 You found the star! Amazing!';
+  } else {
+    fb.style.color='var(--sub)';
+    fb.textContent = 'Keep going...';
+  }
+}
+function resetRobot() {
+  robotPos = {r:0,c:0};
+  renderRobot();
+  const fb = document.getElementById('trobot-feedback');
+  if(fb){ fb.style.color='var(--sub)'; fb.textContent='Use the arrows to move!'; }
+}
+
+// Memory Garden
+let memSeq = [0,1,2];
+let memInput = [];
+let memPhase = 'idle';
+function startMemory() {
+  const btn = document.getElementById('mem-start-btn');
+  if(btn) btn.style.display='none';
+  memInput = [];
+  memPhase = 'showing';
+  const st = document.getElementById('mem-status');
+  const fb = document.getElementById('mem-feedback');
+  fb.textContent='';
+  // Show flowers
+  [0,1,2].forEach(i => { const f=document.getElementById('mf'+i); if(f){ f.style.opacity='1'; } });
+  st.textContent = 'Look carefully... 👀';
+  // Hide after 2s
+  setTimeout(()=>{
+    [0,1,2].forEach(i => { const f=document.getElementById('mf'+i); if(f) f.style.opacity='0'; });
+    st.textContent = 'Now tap them in order!';
+    memPhase = 'recall';
+    [0,1,2].forEach(i => { const b=document.getElementById('memb'+i); if(b){ b.disabled=false; b.style.opacity='1'; } });
+  }, 2200);
+}
+function memTap(idx) {
+  if(memPhase !== 'recall') return;
+  const fb = document.getElementById('mem-feedback');
+  memInput.push(idx);
+  const pos = memInput.length - 1;
+  const btn = document.getElementById('memb'+idx);
+  if(memSeq[pos] === idx) {
+    btn.style.borderColor = 'var(--ok)';
+    btn.style.background = 'rgba(58,148,98,.12)';
+    if(memInput.length === 3) {
+      fb.style.color='var(--ok)';
+      fb.textContent = '🌟 Perfect! You remembered them all!';
+      memPhase = 'done';
+      const btn2 = document.getElementById('mem-start-btn');
+      if(btn2){ btn2.textContent='▶ Play again!'; btn2.style.display='block'; }
+    } else {
+      fb.style.color='var(--ok)'; fb.textContent='✓ Keep going!';
+    }
+  } else {
+    btn.style.borderColor='var(--er)'; btn.style.background='rgba(200,92,58,.08)';
+    fb.style.color='var(--warn)'; fb.textContent='Not quite — let\'s try again 🌱';
+    memPhase='done';
+    [0,1,2].forEach(i => { const f=document.getElementById('mf'+i); if(f) f.style.opacity='1'; });
+    document.getElementById('mem-status').textContent='Here they are again!';
+    setTimeout(()=>{
+      [0,1,2].forEach(i => { const b=document.getElementById('memb'+i); if(b){ b.disabled=true; b.style.opacity='.4'; b.style.borderColor=''; b.style.background=''; } });
+      const btn2=document.getElementById('mem-start-btn'); if(btn2){ btn2.textContent='▶ Try again!'; btn2.style.display='block'; }
+    }, 1200);
+  }
+}
+
+// Story Builder
+let storyNext = 1;
+function storyTap(btn, correctOrder, key) {
+  if(btn.dataset.done) return;
+  const fb = document.getElementById('tstory-feedback');
+  if(correctOrder === storyNext) {
+    btn.dataset.done = '1';
+    btn.style.borderColor = 'var(--ok)';
+    btn.style.background = 'rgba(58,148,98,.1)';
+    const nEl = document.getElementById('story-'+key+'-n');
+    if(nEl){ nEl.textContent=storyNext; nEl.style.display='flex'; }
+    storyNext++;
+    if(storyNext > 3) {
+      fb.style.color='var(--ok)'; fb.textContent='🎉 Great story! You got it right!';
+    } else {
+      fb.style.color='var(--ok)'; fb.textContent='✓ Now tap number '+storyNext+'!';
+    }
+  } else {
+    btn.style.borderColor='var(--er)';
+    fb.style.color='var(--warn)'; fb.textContent='Hmm — think about what happens first 🤔';
+    setTimeout(()=>{ btn.style.borderColor=''; fb.textContent='Tap 1st, then 2nd, then 3rd!'; fb.style.color='var(--sub)'; }, 1200);
+  }
+}
+function storyReset() {
+  storyNext = 1;
+  ['seed','flower','water'].forEach(k => {
+    const b = document.getElementById('story-'+k);
+    const n = document.getElementById('story-'+k+'-n');
+    if(b){ delete b.dataset.done; b.style.borderColor=''; b.style.background=''; }
+    if(n) n.style.display='none';
+  });
+  const fb=document.getElementById('tstory-feedback');
+  fb.textContent='Tap 1st, then 2nd, then 3rd!'; fb.style.color='var(--sub)';
+}
+
+// ── NUMBER WATCH SCREEN ──
+const NUM_DATA = {
+  0: {
+    label:'0',
+    steps:['Start at the top — lift your pencil to the top-middle','Curve all the way round in one big smooth loop','Close the loop back where you started'],
+    strokes:[
+      {id:'nws1', d:'M 60,18 C 95,18 105,50 105,90 C 105,130 95,162 60,162 C 25,162 15,130 15,90 C 15,50 25,18 60,18', dur:2.0, msg:'⭕ Drawing the round loop...'},
+    ],
+    startTop:'45%', startLeft:'47%'
+  },
+  1: {
+    label:'1',
+    steps:['Start at the top','Draw a straight line straight down'],
+    strokes:[
+      {id:'nws1', d:'M 60,18 L 60,162', dur:0.9, msg:'↓ Drawing the line straight down...'},
+    ],
+    startTop:'8%', startLeft:'47%'
+  },
+  2: {
+    label:'2',
+    steps:['Start near the top — centre of the number','Curve right then swing down-left to the bottom','Sweep across to the right along the bottom'],
+    strokes:[
+      {id:'nws1', d:'M 35,45 C 35,18 90,18 90,50 C 90,72 70,88 45,112 C 30,126 22,138 22,148', dur:1.1, msg:'&#8617; Curving down from the top...'},
+      {id:'nws2', d:'M 22,148 L 95,148', dur:0.6, msg:'&rarr; Sweeping across the bottom...'},
+    ],
+    startTop:'20%', startLeft:'22%'
+  },
+  3: {
+    label:'3',
+    steps:['Start at the top left','Curve right, then back in to the middle','Curve right again, then back in at the bottom'],
+    strokes:[
+      {id:'nws1', d:'M 30,30 C 80,14 100,50 60,90', dur:1.0, msg:'↩ Making the top bump...'},
+      {id:'nws2', d:'M 60,90 C 100,125 80,162 30,148', dur:1.0, msg:'↩ Making the bottom bump...'},
+    ],
+    startTop:'13%', startLeft:'20%'
+  },
+  4: {
+    label:'4',
+    steps:['Start at the top right','Draw diagonally down-left to the middle','Draw a short line across to the right','Lift and draw a line straight down from the top'],
+    strokes:[
+      {id:'nws1', d:'M 80,20 L 20,100', dur:0.7, msg:'↙ Drawing the diagonal arm...'},
+      {id:'nws2', d:'M 20,100 L 100,100', dur:0.5, msg:'→ Drawing the crossbar...'},
+      {id:'nws3', d:'M 75,20 L 75,162', dur:0.8, msg:'↓ Drawing the straight line down...'},
+    ],
+    startTop:'7%', startLeft:'58%'
+  },
+  5: {
+    label:'5',
+    steps:['Start at the top right and draw left across the top','Draw straight down the left side','Curve right then down and back left to close the belly'],
+    strokes:[
+      {id:'nws1', d:'M 90,20 L 25,20 L 25,72', dur:0.7, msg:'\u2190 Drawing the top bar and left side...'},
+      {id:'nws2', d:'M 25,72 C 25,72 22,90 48,94 C 78,98 105,108 105,130 C 105,152 86,164 60,164 C 34,164 18,150 18,130 C 18,115 28,105 40,100', dur:1.3, msg:'\u21AA Curving right for the belly...'},
+    ],
+    startTop:'9%', startLeft:'70%'
+  },
+  6: {
+    label:'6',
+    steps:['Start at the top right','Curve left and sweep all the way down','Loop around to the right to close the circle at the bottom'],
+    strokes:[
+      {id:'nws1', d:'M 85,28 C 60,10 18,30 16,80 C 14,125 30,158 65,160 C 95,162 112,142 112,115 C 112,88 95,72 65,72 C 40,72 20,90 20,115', dur:2.2, msg:'\u21A9 Sweeping down and closing the circle...'},
+    ],
+    startTop:'11%', startLeft:'65%'
+  },
+  7: {
+    label:'7',
+    steps:['Start at the top left','Draw across to the right','Then angle down-left to the bottom'],
+    strokes:[
+      {id:'nws1', d:'M 20,28 L 100,28', dur:0.5, msg:'→ Drawing the top bar...'},
+      {id:'nws2', d:'M 100,28 L 38,162', dur:0.9, msg:'↙ Angling down to the bottom...'},
+    ],
+    startTop:'11%', startLeft:'13%'
+  },
+  8: {
+    label:'8',
+    steps:['Start in the middle','Draw upward and loop round to make the top circle','Continue curving round to make the bottom circle','Come back to where you started'],
+    strokes:[
+      {id:'nws1', d:'M 60,88 C 60,88 30,82 30,55 C 30,28 90,28 90,55 C 90,82 60,88 60,88 C 60,88 25,96 25,127 C 25,155 95,158 95,127 C 95,96 60,88 60,88', dur:2.5, msg:'\u221E Drawing both loops...'},
+    ],
+    startTop:'46%', startLeft:'46%'
+  },
+  9: {
+    label:'9',
+    steps:['Start at the top of the circle','Draw round to the left and all the way round to close the circle','Continue the line straight down from the right side'],
+    strokes:[
+      {id:'nws1', d:'M 68,20 C 95,20 108,40 108,62 C 108,88 90,105 65,105 C 40,105 22,88 22,62 C 22,36 40,20 65,20', dur:1.8, msg:'\u25CB Drawing the circle...'},
+      {id:'nws2', d:'M 108,62 L 108,158', dur:0.8, msg:'\u2193 Drawing the tail straight down...'},
+    ],
+    startTop:'7%', startLeft:'51%'
+  }
+};
+
+let currentNum = 1;
+let numWatchBusy = false;
+
+function goToNumWatch(n) {
+  currentNum = n;
+  resetNumWatch();
+  goTo('numwatch');
+}
+
+function resetNumWatch() {
+  numWatchBusy = false;
+  const data = NUM_DATA[currentNum];
+  document.getElementById('nw-title').textContent = 'Watch & Learn — ' + data.label;
+  document.getElementById('nw-subtitle').textContent = 'Watch how to write the number ' + data.label;
+  document.getElementById('nw-steps-title').textContent = 'How to write "' + data.label + '"';
+
+  // Build steps list
+  const list = document.getElementById('nw-steps-list');
+  list.innerHTML = data.steps.map((s,i)=>`<div class="sstep"><div class="snum">${i+1}</div><span style="color:var(--tx);font-size:14px;padding-top:3px">${s}</span></div>`).join('');
+
+  // Build step dots
+  const dots = document.getElementById('nw-dots');
+  const numDots = data.strokes.length + 1;
+  dots.innerHTML = Array.from({length:numDots},(_,i)=>`<div class="sdot" id="nsd${i}"></div>`).join('');
+
+  // Reset all strokes
+  const paths = ['nws1','nws2','nws3'];
+  paths.forEach(id=>{
+    const p = document.getElementById(id);
+    if(!p) return;
+    p.style.transition='none';
+    p.setAttribute('d','');
+    p.style.stroke='var(--alt)';
+    p.style.strokeDasharray='';
+    p.style.strokeDashoffset='';
+  });
+
+  const startDot = document.getElementById('nw-startdot');
+  if(startDot){ startDot.style.display='none'; startDot.style.top=data.startTop; startDot.style.left=data.startLeft; }
+  document.getElementById('nwstatus').textContent='Press play to see how';
+  document.getElementById('nwstatus').style.color='var(--sub)';
+  document.getElementById('nwbtns1').style.display='block';
+  document.getElementById('nwbtns2').style.display='none';
+}
+
+function playNumWatch() {
+  if(numWatchBusy) return;
+  numWatchBusy = true;
+  const data = NUM_DATA[currentNum];
+  const st = document.getElementById('nwstatus');
+  const startDot = document.getElementById('nw-startdot');
+
+  // Set all stroke paths first, reset offsets
+  data.strokes.forEach(s=>{
+    const p = document.getElementById(s.id);
+    p.style.transition='none';
+    p.setAttribute('d', s.d);
+    p.style.stroke='var(--alt)';
+  });
+
+  // Phase 0 — show start dot
+  st.style.color='var(--ac)';
+  st.textContent='● Start here';
+  if(startDot){ startDot.style.display='block'; }
+
+  // After short pause, init dash arrays (paths need to be in DOM with 'd' set)
+  setTimeout(()=>{
+    data.strokes.forEach(s=>{
+      const p = document.getElementById(s.id);
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = len;
+      p.style.strokeDashoffset = len;
+    });
+  }, 100);
+
+  let cumulativeTime = 800;
+
+  data.strokes.forEach((s, i)=>{
+    setTimeout(()=>{
+      if(startDot && i===0) startDot.style.display='none';
+      const p = document.getElementById(s.id);
+      p.style.stroke='var(--ac)';
+      p.getBoundingClientRect();
+      p.style.transition=`stroke-dashoffset ${s.dur}s ease, stroke 0.2s`;
+      p.style.strokeDashoffset=0;
+      document.getElementById('nsd'+i).classList.add('lit');
+      st.textContent=s.msg;
+    }, cumulativeTime);
+    cumulativeTime += Math.round(s.dur * 1000) + 600;
+  });
+
+  // Final phase
+  setTimeout(()=>{
+    const lastDot = document.getElementById('nsd'+(data.strokes.length));
+    if(lastDot) lastDot.classList.add('lit');
+    data.strokes.forEach(s=>{
+      const p = document.getElementById(s.id);
+      p.style.transition='stroke 0.3s';
+      p.style.stroke='var(--tx)';
+    });
+    st.style.color='var(--ok)';
+    st.textContent='✓ Got it? Now it\'s your turn!';
+    document.getElementById('nwbtns1').style.display='none';
+    document.getElementById('nwbtns2').style.display='block';
+    numWatchBusy=false;
+  }, cumulativeTime);
+}
+
+function replayNumWatch(){ resetNumWatch(); setTimeout(playNumWatch, 120); }
+
+// ── HELPERS ──
+function show(id){ const el=document.getElementById(id); if(el) el.style.display=''; }
+function hide(id){ const el=document.getElementById(id); if(el) el.style.display='none'; }
+
+
+// ── Additional wiring ────────────────────────────────────────────────────────
+
+// Override goTo to auto-load data for screens
+const _originalGoTo = goTo;
+function goTo(id) {
+  _originalGoTo(id);
+  if (id === 'home')     setTimeout(loadHomeData, 50);
+  if (id === 'parent')   setTimeout(loadParentData, 50);
+  if (id === 'educator') setTimeout(loadEducatorData, 50);
+}
+
+function promptLogin(role) {
+  const pin = prompt('Enter ' + role + ' PIN (demo: ' + (role==='parent'?'1234':'5678') + '):');
+  if (pin !== null) loginAs(role, pin, null);
+}
+
+// Check backend on load
+async function checkBackend() {
+  try {
+    const r = await fetch('/api/health');
+    const d = await r.json();
+    if (d.java?.status !== 'ok') throw new Error('Java down');
+    document.getElementById('backend-banner').classList.remove('show');
+  } catch(e) {
+    document.getElementById('backend-banner').classList.add('show');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkBackend();
+  renderRobot();
+  updateTryProgress();
+});
+</script>
+</body>
+</html>
