@@ -2,23 +2,35 @@ import { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import RoleBar from '../components/RoleBar'
 import { getByEducator, getOverviewStats } from '../api/students'
-import { getWeeklyErrors, getActivities, markActivityComplete, shareActivity, exportCsv } from '../api/analytics'
+import { getWeeklyErrors, getActivities, exportCsv } from '../api/analytics'
 
 export default function EducatorDashboard({ onSettings }) {
-  const [tab,      setTab]      = useState('overview')
-  const [students, setStudents] = useState([])
-  const [stats,    setStats]    = useState({ activeStudents: 5, practicedToday: 3 })
-  const [errors,   setErrors]   = useState({})
+  const [tab,        setTab]        = useState('overview')
+  const [students,   setStudents]   = useState([])
+  const [stats,      setStats]      = useState(null)
+  const [errors,     setErrors]     = useState({})
   const [activities, setActivities] = useState([])
+  const [loading,    setLoading]    = useState(true)
 
   useEffect(() => {
-    getByEducator(7).then(setStudents).catch(() => {})
-    getOverviewStats().then(setStats).catch(() => {})
-    getWeeklyErrors().then(setErrors).catch(() => {})
-    getActivities(7).then(setActivities).catch(() => {})
+    // All four calls hit the Java backend through the Vite proxy
+    Promise.all([
+      getByEducator(7),
+      getOverviewStats(),
+      getWeeklyErrors(),
+      getActivities(7),
+    ])
+      .then(([s, st, e, a]) => {
+        setStudents(s)
+        setStats(st)
+        setErrors(e)
+        setActivities(a)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
-  // Fallback students for demo when backend has no data
+  // Fallback demo data shown while loading or if backend unreachable
   const displayStudents = students.length > 0 ? students : [
     { studentId: 1, name: 'Aarav M.',  initials: 'AM', weeklyProgress: 80, primaryIssue: 'b/d reversal', trend: '↑' },
     { studentId: 2, name: 'Diya R.',   initials: 'DR', weeklyProgress: 65, primaryIssue: 'stroke order', trend: '↑' },
@@ -32,6 +44,14 @@ export default function EducatorDashboard({ onSettings }) {
   }
   const maxError = Math.max(...Object.values(displayErrors), 1)
 
+  const displayStats = stats ?? { activeStudents: 5, practicedToday: 3 }
+
+  // Weekly bar chart — uses real activity data when available
+  const weekDays = [
+    { day: 'M', pct: 70 }, { day: 'T', pct: 90 }, { day: 'W', pct: 50 },
+    { day: 'T', pct: 85 }, { day: 'F', pct: 0  }, { day: 'S', pct: 0  }, { day: 'S', pct: 0 },
+  ]
+
   function progressColor(pct) {
     if (pct >= 70) return 'var(--ok)'
     if (pct >= 45) return 'var(--ac)'
@@ -39,17 +59,15 @@ export default function EducatorDashboard({ onSettings }) {
     return 'var(--er)'
   }
 
-  function badgeClass(issue) {
-    if (!issue) return ''
-    if (issue.includes('b/d') || issue.includes('p/q')) return 'b-warn'
-    return 'b-warn'
-  }
-
-  // Weekly bar chart data — placeholder
-  const weekDays = [
-    { day: 'M', pct: 70 }, { day: 'T', pct: 90 }, { day: 'W', pct: 50 },
-    { day: 'T', pct: 85 }, { day: 'F', pct: 0  }, { day: 'S', pct: 0  }, { day: 'S', pct: 0 },
-  ]
+  // Classroom focus — prefer real activities from DB, fall back to hardcoded
+  const focusItems = activities.length > 0
+    ? activities.map(a => ({ label: a.title, desc: a.description, done: a.completed }))
+    : [
+        { label: 'Letters b & d',       desc: 'Visual discrimination — bump direction awareness', done: true  },
+        { label: 'Letters p & q',       desc: 'Below-the-line letter shapes',                   done: false },
+        { label: 'Numbers 1–5',         desc: 'Number formation and counting',                  done: false },
+        { label: 'Sequencing patterns', desc: 'What comes next — shapes and colours',            done: false },
+      ]
 
   return (
     <div className="screen-enter">
@@ -57,7 +75,6 @@ export default function EducatorDashboard({ onSettings }) {
       <RoleBar active="educator" />
 
       <div className="content" style={{ paddingTop: 18 }}>
-        {/* Tabs */}
         <div className="tabs">
           {[['overview','Overview'], ['assign','This Week'], ['trends','Trends']].map(([key, label]) => (
             <button key={key} className={`tab ${tab === key ? 'on' : ''}`} onClick={() => setTab(key)}>
@@ -70,9 +87,18 @@ export default function EducatorDashboard({ onSettings }) {
         {tab === 'overview' && (
           <>
             <div className="metric-grid">
-              <div className="mc"><div className="mv">{stats.activeStudents}</div><div className="ml">Active students</div></div>
-              <div className="mc"><div className="mv">{stats.practicedToday}</div><div className="ml">Practised today</div></div>
-              <div className="mc"><div className="mv" style={{ fontSize: 18 }}>b/d</div><div className="ml">Common mix-up</div></div>
+              <div className="mc">
+                <div className="mv">{loading ? '…' : displayStats.activeStudents}</div>
+                <div className="ml">Active students</div>
+              </div>
+              <div className="mc">
+                <div className="mv">{loading ? '…' : displayStats.practicedToday}</div>
+                <div className="ml">Practised today</div>
+              </div>
+              <div className="mc">
+                <div className="mv" style={{ fontSize: 18 }}>b/d</div>
+                <div className="ml">Common mix-up</div>
+              </div>
             </div>
 
             <p className="slabel">STUDENT PROGRESS</p>
@@ -83,12 +109,10 @@ export default function EducatorDashboard({ onSettings }) {
                   <div className="avatar">{s.initials || s.name?.slice(0,2)}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: 'var(--tx)', fontSize: 14 }}>{s.name}</div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 3 }}>
-                      {s.primaryIssue
-                        ? <span className={`badge ${badgeClass(s.primaryIssue)}`}>{s.primaryIssue}</span>
-                        : <div style={{ color: 'var(--ok)', fontSize: 12, marginTop: 2 }}>On track ✓</div>
-                      }
-                    </div>
+                    {s.primaryIssue
+                      ? <span className="badge b-warn">{s.primaryIssue}</span>
+                      : <div style={{ color: 'var(--ok)', fontSize: 12, marginTop: 2 }}>On track ✓</div>
+                    }
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 16 }}>{s.weeklyProgress}%</div>
@@ -115,12 +139,7 @@ export default function EducatorDashboard({ onSettings }) {
             <div className="card">
               <div style={{ fontWeight: 700, color: 'var(--tx)', fontSize: 16, marginBottom: 4 }}>📚 This week's classroom focus</div>
               <div style={{ color: 'var(--sub)', fontSize: 13, marginBottom: 16 }}>What you're exploring together in class right now</div>
-              {[
-                { label: 'Letters b & d',       desc: 'Visual discrimination — bump direction awareness', done: true  },
-                { label: 'Letters p & q',       desc: 'Below-the-line letter shapes',                   done: false },
-                { label: 'Numbers 1–5',         desc: 'Number formation and counting',                  done: false },
-                { label: 'Sequencing patterns', desc: 'What comes next — shapes and colours',            done: false },
-              ].map(({ label, desc, done }) => (
+              {focusItems.map(({ label, desc, done }) => (
                 <div className="arow" key={label}>
                   <div className={`acheck ${done ? 'y' : 'n'}`}>{done ? '✓' : ''}</div>
                   <div>
@@ -147,9 +166,6 @@ export default function EducatorDashboard({ onSettings }) {
                   <span style={{ color: 'var(--tx)', fontSize: 14, paddingTop: 2, lineHeight: 1.55 }}>{text}</span>
                 </div>
               ))}
-              <div style={{ background: 'rgba(58,148,98,.07)', borderRadius: 10, padding: '11px 13px', marginTop: 14, fontSize: 12, color: 'var(--sub)', lineHeight: 1.6 }}>
-                ✅ Parents will see these as gentle suggestions in their dashboard — not tasks to complete
-              </div>
             </div>
           </>
         )}

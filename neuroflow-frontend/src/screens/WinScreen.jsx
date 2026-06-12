@@ -10,19 +10,20 @@ export default function WinScreen({ onSettings }) {
   const [stats, setStats] = useState(null)
 
   useEffect(() => {
+    // Calls GET /api/practice/today/1 → real session data from DB
     if (student?.studentId) {
       getTodayStats(student.studentId).then(setStats).catch(() => {})
     }
   }, [student])
 
-  const minutes  = stats ? Math.round(stats.durationSeconds / 60) : 12
+  const minutes  = stats ? Math.round((stats.durationSeconds ?? 0) / 60) : 12
   const attempts = stats?.attempts ?? 5
   const streak   = student?.streakDays ?? 4
+  const letters  = stats?.practicedLetters?.length ?? 3
 
   return (
     <div className="screen-enter">
       <TopBar title="Great work!" onSettings={onSettings} />
-
       <div className="content" style={{ textAlign: 'center' }}>
         <div className="win-icon">🌟</div>
         <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--tx)', marginBottom: 8 }}>Done for today!</div>
@@ -43,7 +44,7 @@ export default function WinScreen({ onSettings }) {
           </div>
           <div className="stat-card">
             <div style={{ fontSize: 24, marginBottom: 4 }}>🎯</div>
-            <div className="sv">{stats?.practicedLetters?.length ?? 3} letters</div>
+            <div className="sv">{letters} letters</div>
             <div className="sl">This week</div>
           </div>
           <div className="stat-card">

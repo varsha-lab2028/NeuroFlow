@@ -1,22 +1,34 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import TopBar from '../components/TopBar'
 import RoleBar from '../components/RoleBar'
+import { useAuth } from '../context/AuthContext'
+import { getParentSummary } from '../api/analytics'
 
-// Demo data — no API needed
-const DEMO = {
-  todayMinutes: 12,
-  todayAttempts: 5,
-  practicedLetters: ['b', 'd'],
-  weeklyErrors: { 'b/d reversal': 60, 'p/q reversal': 30 },
-  tips: [
+export default function ParentDashboard({ onSettings }) {
+  const { student } = useAuth()
+  const [data, setData]     = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Calls GET /api/analytics/parent-summary/1 → real data from DB
+    const id = student?.studentId ?? 1
+    getParentSummary(id)
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [student])
+
+  // Fall back to demo values if backend not reachable
+  const minutes  = data?.todayDurationMinutes ?? 12
+  const attempts = data?.todayAttempts ?? 5
+  const letters  = data?.practicedLetters ?? ['b', 'd']
+  const errors   = data?.weeklyErrors ?? { 'b/d reversal': 60, 'p/q reversal': 30 }
+
+  const tips = [
     'Ask "which way does the bump go?" when reading together',
     'Point out b and d in books — no pressure, just notice them',
     'Celebrate the practice, not just the result ✨',
-  ],
-}
-
-export default function ParentDashboard({ onSettings }) {
-  const navigate = useNavigate()
+  ]
 
   return (
     <div className="screen-enter">
@@ -37,27 +49,27 @@ export default function ParentDashboard({ onSettings }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div style={{ background: 'var(--alt)', borderRadius: 10, padding: 11 }}>
-              <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 18 }}>{DEMO.todayMinutes} min</div>
+              <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 18 }}>{loading ? '...' : `${minutes} min`}</div>
               <div style={{ color: 'var(--sub)', fontSize: 11, marginTop: 2 }}>Time spent</div>
             </div>
             <div style={{ background: 'var(--alt)', borderRadius: 10, padding: 11 }}>
-              <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 18 }}>{DEMO.todayAttempts} tries</div>
+              <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 18 }}>{loading ? '...' : `${attempts} tries`}</div>
               <div style={{ color: 'var(--sub)', fontSize: 11, marginTop: 2 }}>Per letter</div>
             </div>
             <div style={{ background: 'var(--alt)', borderRadius: 10, padding: 11, gridColumn: 'span 2' }}>
               <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 16 }}>
-                Letters {DEMO.practicedLetters.join(' & ')}
+                Letters {Array.isArray(letters) ? letters.join(' & ') : 'b & d'}
               </div>
               <div style={{ color: 'var(--sub)', fontSize: 11, marginTop: 2 }}>Practised today</div>
             </div>
           </div>
         </div>
 
-        {/* Common mix-ups */}
+        {/* Common mix-ups — real error data from DB */}
         <div className="card">
           <div style={{ fontWeight: 700, color: 'var(--tx)', fontSize: 16, marginBottom: 6 }}>🔄 Common mix-ups</div>
           <div style={{ color: 'var(--sub)', fontSize: 13, marginBottom: 14 }}>Totally normal — these letters look very similar!</div>
-          {Object.entries(DEMO.weeklyErrors).map(([label, pct]) => (
+          {Object.entries(errors).map(([label, pct]) => (
             <div className="trow" key={label}>
               <div className="tlabel">
                 <span style={{ fontWeight: 700, color: 'var(--tx)', fontFamily: 'Georgia,serif', fontSize: 19 }}>{label}</span>
@@ -73,7 +85,7 @@ export default function ParentDashboard({ onSettings }) {
         {/* Tips */}
         <div className="card">
           <div style={{ fontWeight: 700, color: 'var(--tx)', fontSize: 16, marginBottom: 12 }}>💡 What you can do today</div>
-          {DEMO.tips.map((tip, i) => (
+          {tips.map((tip, i) => (
             <div className="sstep" key={i}>
               <div className="snum">{i + 1}</div>
               <span style={{ color: 'var(--tx)', fontSize: 14, paddingTop: 2, lineHeight: 1.5 }}>{tip}</span>
@@ -81,7 +93,19 @@ export default function ParentDashboard({ onSettings }) {
           ))}
         </div>
 
-        {/* Settings shortcut */}
+        {/* Shared activities from educator */}
+        {data?.sharedActivities?.length > 0 && (
+          <div className="card">
+            <div style={{ fontWeight: 700, color: 'var(--tx)', fontSize: 16, marginBottom: 12 }}>📚 From the classroom this week</div>
+            {data.sharedActivities.map((act, i) => (
+              <div className="sstep" key={i}>
+                <div className="snum">•</div>
+                <span style={{ color: 'var(--tx)', fontSize: 14, paddingTop: 2, lineHeight: 1.5 }}>{act.description}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <button
           onClick={onSettings}
           style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', background: 'var(--sf)', border: '1px solid var(--bd)', borderRadius: 18, padding: '16px 20px', cursor: 'pointer', textAlign: 'left', marginBottom: 0 }}
