@@ -1,21 +1,21 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider, useTheme } from './context/ThemeContext'
 
 import SettingsOverlay from './components/SettingsOverlay'
 
-import LoginScreen    from './screens/LoginScreen'
-import HomeScreen     from './screens/HomeScreen'
-import WatchScreen    from './screens/WatchScreen'
-import TryScreen      from './screens/TryScreen'
-import GuideScreen    from './screens/GuideScreen'
-import WinScreen      from './screens/WinScreen'
-import ParentDashboard    from './screens/ParentDashboard'
-import EducatorDashboard  from './screens/EducatorDashboard'
+import LoginScreen       from './screens/LoginScreen'
+import HomeScreen        from './screens/HomeScreen'
+import WatchScreen       from './screens/WatchScreen'
+import TryScreen         from './screens/TryScreen'
+import GuideScreen       from './screens/GuideScreen'
+import WinScreen         from './screens/WinScreen'
+import ParentDashboard   from './screens/ParentDashboard'
+import EducatorDashboard from './screens/EducatorDashboard'
 
-import ThinkingMenu   from './screens/thinking/ThinkingMenu'
+import ThinkingMenu from './screens/thinking/ThinkingMenu'
 import {
   DetectiveGame,
   SoundGame,
@@ -25,49 +25,39 @@ import {
   StoryGame,
 } from './screens/thinking/ThinkingGames'
 
-// ── Inner app: has access to both context values ──────────────────
 function AppRoutes() {
-  const { user }                     = useAuth()
-  const { themeClass, styleVars }    = useTheme()
-  const [settingsOpen, setSettings]  = useState(false)
-
-  const openSettings  = () => setSettings(true)
-  const closeSettings = () => setSettings(false)
-
-  // Pass onSettings down to every screen so the ⚙ cog works everywhere
-  const sp = { onSettings: openSettings }
+  const { themeClass, styleVars } = useTheme()
+  const [settingsOpen, setSettings] = useState(false)
+  const sp = { onSettings: () => setSettings(true) }
 
   return (
-    // #app div gets the theme class + CSS variable overrides for font/spacing
     <div id="app" className={themeClass} style={styleVars}>
-      <SettingsOverlay isOpen={settingsOpen} onClose={closeSettings} />
-
+      <SettingsOverlay isOpen={settingsOpen} onClose={() => setSettings(false)} />
       <Routes>
-        {/* Public */}
-        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/login"    element={<LoginScreen />} />
 
-        {/* Child flow */}
-        <Route path="/home"    element={user ? <HomeScreen {...sp} />  : <Navigate to="/login" />} />
-        <Route path="/watch"   element={user ? <WatchScreen {...sp} /> : <Navigate to="/login" />} />
-        <Route path="/try"     element={user ? <TryScreen {...sp} />   : <Navigate to="/login" />} />
-        <Route path="/guide"   element={user ? <GuideScreen {...sp} /> : <Navigate to="/login" />} />
-        <Route path="/win"     element={user ? <WinScreen {...sp} />   : <Navigate to="/login" />} />
+        {/* Child flow — no auth guard for demo */}
+        <Route path="/home"    element={<HomeScreen {...sp} />} />
+        <Route path="/watch"   element={<WatchScreen {...sp} />} />
+        <Route path="/try"     element={<TryScreen {...sp} />} />
+        <Route path="/guide"   element={<GuideScreen {...sp} />} />
+        <Route path="/win"     element={<WinScreen {...sp} />} />
 
         {/* Thinking skills */}
-        <Route path="/thinking"             element={user ? <ThinkingMenu {...sp} />  : <Navigate to="/login" />} />
-        <Route path="/thinking/detective"   element={user ? <DetectiveGame {...sp} /> : <Navigate to="/login" />} />
-        <Route path="/thinking/sound"       element={user ? <SoundGame {...sp} />     : <Navigate to="/login" />} />
-        <Route path="/thinking/pattern"     element={user ? <PatternGame {...sp} />   : <Navigate to="/login" />} />
-        <Route path="/thinking/robot"       element={user ? <RobotGame {...sp} />     : <Navigate to="/login" />} />
-        <Route path="/thinking/memory"      element={user ? <MemoryGame {...sp} />    : <Navigate to="/login" />} />
-        <Route path="/thinking/story"       element={user ? <StoryGame {...sp} />     : <Navigate to="/login" />} />
+        <Route path="/thinking"           element={<ThinkingMenu {...sp} />} />
+        <Route path="/thinking/detective" element={<DetectiveGame {...sp} />} />
+        <Route path="/thinking/sound"     element={<SoundGame {...sp} />} />
+        <Route path="/thinking/pattern"   element={<PatternGame {...sp} />} />
+        <Route path="/thinking/robot"     element={<RobotGame {...sp} />} />
+        <Route path="/thinking/memory"    element={<MemoryGame {...sp} />} />
+        <Route path="/thinking/story"     element={<StoryGame {...sp} />} />
 
         {/* Parent / Educator */}
-        <Route path="/parent"   element={user ? <ParentDashboard {...sp} />   : <Navigate to="/login" />} />
-        <Route path="/educator" element={user ? <EducatorDashboard {...sp} /> : <Navigate to="/login" />} />
+        <Route path="/parent"   element={<ParentDashboard {...sp} />} />
+        <Route path="/educator" element={<EducatorDashboard {...sp} />} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to={user ? '/home' : '/login'} />} />
+        {/* Default → login */}
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </div>
   )

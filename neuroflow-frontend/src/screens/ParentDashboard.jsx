@@ -1,26 +1,22 @@
-import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar'
 import RoleBar from '../components/RoleBar'
-import { useAuth } from '../context/AuthContext'
-import { getParentSummary } from '../api/analytics'
+
+// Demo data — no API needed
+const DEMO = {
+  todayMinutes: 12,
+  todayAttempts: 5,
+  practicedLetters: ['b', 'd'],
+  weeklyErrors: { 'b/d reversal': 60, 'p/q reversal': 30 },
+  tips: [
+    'Ask "which way does the bump go?" when reading together',
+    'Point out b and d in books — no pressure, just notice them',
+    'Celebrate the practice, not just the result ✨',
+  ],
+}
 
 export default function ParentDashboard({ onSettings }) {
-  const navigate    = useNavigate()
-  const { student } = useAuth()
-  const [data, setData] = useState(null)
-
-  useEffect(() => {
-    if (student?.studentId) {
-      getParentSummary(student.studentId).then(setData).catch(() => {})
-    }
-  }, [student])
-
-  const errors       = data?.weeklyErrors ?? { 'b/d reversal': 60, 'p/q reversal': 30 }
-  const minutes      = data?.todayDurationMinutes ?? 12
-  const attempts     = data?.todayAttempts ?? 5
-  const letters      = data?.practicedLetters ?? ['b', 'd']
-  const sharedActs   = data?.sharedActivities ?? []
+  const navigate = useNavigate()
 
   return (
     <div className="screen-enter">
@@ -41,16 +37,16 @@ export default function ParentDashboard({ onSettings }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div style={{ background: 'var(--alt)', borderRadius: 10, padding: 11 }}>
-              <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 18 }}>{minutes} min</div>
+              <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 18 }}>{DEMO.todayMinutes} min</div>
               <div style={{ color: 'var(--sub)', fontSize: 11, marginTop: 2 }}>Time spent</div>
             </div>
             <div style={{ background: 'var(--alt)', borderRadius: 10, padding: 11 }}>
-              <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 18 }}>{attempts} tries</div>
+              <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 18 }}>{DEMO.todayAttempts} tries</div>
               <div style={{ color: 'var(--sub)', fontSize: 11, marginTop: 2 }}>Per letter</div>
             </div>
             <div style={{ background: 'var(--alt)', borderRadius: 10, padding: 11, gridColumn: 'span 2' }}>
               <div style={{ fontWeight: 800, color: 'var(--tx)', fontSize: 16 }}>
-                Letters {[...letters].join(' & ')}
+                Letters {DEMO.practicedLetters.join(' & ')}
               </div>
               <div style={{ color: 'var(--sub)', fontSize: 11, marginTop: 2 }}>Practised today</div>
             </div>
@@ -61,7 +57,7 @@ export default function ParentDashboard({ onSettings }) {
         <div className="card">
           <div style={{ fontWeight: 700, color: 'var(--tx)', fontSize: 16, marginBottom: 6 }}>🔄 Common mix-ups</div>
           <div style={{ color: 'var(--sub)', fontSize: 13, marginBottom: 14 }}>Totally normal — these letters look very similar!</div>
-          {Object.entries(errors).map(([label, pct]) => (
+          {Object.entries(DEMO.weeklyErrors).map(([label, pct]) => (
             <div className="trow" key={label}>
               <div className="tlabel">
                 <span style={{ fontWeight: 700, color: 'var(--tx)', fontFamily: 'Georgia,serif', fontSize: 19 }}>{label}</span>
@@ -74,26 +70,16 @@ export default function ParentDashboard({ onSettings }) {
           ))}
         </div>
 
-        {/* What you can do */}
+        {/* Tips */}
         <div className="card">
           <div style={{ fontWeight: 700, color: 'var(--tx)', fontSize: 16, marginBottom: 12 }}>💡 What you can do today</div>
-          <div className="sstep"><div className="snum">1</div><span style={{ color: 'var(--tx)', fontSize: 14, paddingTop: 2, lineHeight: 1.5 }}>Ask "which way does the bump go?" when reading together</span></div>
-          <div className="sstep"><div className="snum">2</div><span style={{ color: 'var(--tx)', fontSize: 14, paddingTop: 2, lineHeight: 1.5 }}>Point out b and d in books — no pressure, just notice them</span></div>
-          <div className="sstep"><div className="snum">3</div><span style={{ color: 'var(--tx)', fontSize: 14, paddingTop: 2, lineHeight: 1.5 }}>Celebrate the practice, not just the result ✨</span></div>
+          {DEMO.tips.map((tip, i) => (
+            <div className="sstep" key={i}>
+              <div className="snum">{i + 1}</div>
+              <span style={{ color: 'var(--tx)', fontSize: 14, paddingTop: 2, lineHeight: 1.5 }}>{tip}</span>
+            </div>
+          ))}
         </div>
-
-        {/* Shared activities from educator */}
-        {sharedActs.length > 0 && (
-          <div className="card">
-            <div style={{ fontWeight: 700, color: 'var(--tx)', fontSize: 16, marginBottom: 12 }}>📚 From the classroom this week</div>
-            {sharedActs.map((act) => (
-              <div className="sstep" key={act.activityId}>
-                <div className="snum">•</div>
-                <span style={{ color: 'var(--tx)', fontSize: 14, paddingTop: 2, lineHeight: 1.5 }}>{act.description}</span>
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Settings shortcut */}
         <button
