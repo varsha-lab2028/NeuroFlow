@@ -157,7 +157,9 @@ public class DatabaseManager {
         }
         ps.close();
 
-        String today = LocalDate.now().toString();
+        LocalDate monday = LocalDate.now();
+        while (monday.getDayOfWeek().getValue() != 1) monday = monday.minusDays(1);
+        String today = monday.toString();
         String[][] errors = {
             {"1","b/d reversal",today,"24"}, {"2","b/d reversal",today,"14"},
             {"3","stroke direction",today,"12"}, {"4","b/d reversal",today,"0"},
