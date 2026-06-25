@@ -1,0 +1,619 @@
+/* ============================================================
+   NeuroFlow — theme.css
+   Copy this file to:  src/styles/theme.css
+   Then import it in:  src/main.jsx   →   import './styles/theme.css'
+   ============================================================ */
+
+/* Google Font for dyslexia-friendly reading mode */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700;800;900&display=swap');
+
+/* ── Reset ──────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Body / page background ─────────────────────────────────── */
+/*
+  The prototype shows a grey-brown page with a phone-shaped card
+  centred on it. In React (a real app) you don't need the phone
+  shell — the app fills the browser. Keep the font stack and just
+  use a white/var(--bg) body.
+*/
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--tx);
+  min-height: 100vh;
+}
+
+/* ── CSS Variables — Default theme (Soft Cream) ─────────────── */
+/*
+  Every colour in the app is a variable. Swapping themes is just
+  adding one of the theme classes below to <div id="app"> (or
+  <body>). React's ThemeContext handles that — see Step 6.
+
+  Variable cheat-sheet:
+    --bg   page background
+    --sf   surface / card background
+    --alt  muted surface (pill backgrounds, empty bars)
+    --tx   primary text
+    --sub  secondary / muted text
+    --ac   accent (buttons, progress bars, active states)
+    --acl  accent light (chips, backgrounds on accent elements)
+    --ok   green  (success, correct)
+    --er   red    (error, wrong)
+    --warn orange (warning)
+    --bd   border colour
+*/
+:root {
+  --bg:   #F6F1E8;
+  --sf:   #FFFFFF;
+  --alt:  #EDE8DC;
+  --tx:   #1E1E1E;
+  --sub:  #666666;
+  --ac:   #4E8FC5;
+  --acl:  #D4E9F8;
+  --ok:   #3A9462;
+  --er:   #C85C3A;
+  --warn: #D68B25;
+  --bd:   rgba(0, 0, 0, 0.09);
+}
+
+/* Blue Mist theme — add class="t-blue" to your <div id="app"> */
+.t-blue {
+  --bg:   #EEF4FA;
+  --sf:   #FFFFFF;
+  --alt:  #E0EAF5;
+  --tx:   #1B1F24;
+  --sub:  #4A5568;
+  --ac:   #5B8FB9;
+  --acl:  #C4DAF0;
+  --ok:   #3A9462;
+  --er:   #C85C3A;
+  --warn: #D68B25;
+  --bd:   rgba(0, 0, 0, 0.09);
+}
+
+/* Warm Paper theme */
+.t-warm {
+  --bg:   #F7EFE3;
+  --sf:   #FFF8EF;
+  --alt:  #EEE0CE;
+  --tx:   #202020;
+  --sub:  #6B4E3D;
+  --ac:   #C98F6B;
+  --acl:  #F0D9C8;
+  --ok:   #3A9462;
+  --er:   #C85C3A;
+  --warn: #D68B25;
+  --bd:   rgba(0, 0, 0, 0.09);
+}
+
+/* Night (dark) theme */
+.t-dark {
+  --bg:   #1E1E1E;
+  --sf:   #2A2A2A;
+  --alt:  #383838;
+  --tx:   #E6E6E6;
+  --sub:  #A8A8A8;
+  --ac:   #7BA8F0;
+  --acl:  #1A2D4C;
+  --ok:   #4DBB79;
+  --er:   #F07550;
+  --warn: #E09040;
+  --bd:   rgba(255, 255, 255, 0.1);
+}
+
+/* ── Reading-mode typography vars ───────────────────────────── */
+/*
+  Applied to #app (or body) from ThemeContext when a reading mode
+  is selected. Defaults are normal spacing.
+*/
+#app {
+  --ls: 0em;
+  --lh: 1.6;
+  --ff: 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: var(--ls);
+  line-height: var(--lh);
+  font-family: var(--ff);
+  font-size: inherit;
+}
+
+/* Without font-family:inherit, browser resets buttons/inputs to
+   system font — so the Dyslexia / Low-Vision font change looks like
+   it's doing nothing on interactive elements.                        */
+#app *, #app *::before, #app *::after {
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+/* font-size: 1em lets all content sections scale with ThemeContext
+   setFontSize (13 / 16 / 20 px set on #app inline style).           */
+#app .content,
+#app .card,
+#app .overlay-panel,
+#app .btn,
+#app .top-bar,
+#app .grip-row,
+#app .helpbox,
+#app .slabel,
+#app .tab,
+#app .arow,
+#app .sturow {
+  font-size: 1em;
+}
+
+/* ── Screen slide-in animation ──────────────────────────────── */
+/*
+  React Router will mount/unmount components instead of toggling
+  .active, but you can still apply this animation via a wrapper
+  div on each screen component.
+  Usage:  <div className="screen-enter"> ... </div>
+*/
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+.screen-enter {
+  animation: slideIn 0.22s ease;
+}
+
+/* ── Top bar ────────────────────────────────────────────────── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--sf);
+  border-bottom: 1px solid var(--bd);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.top-bar .title {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--tx);
+}
+.btn-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ac);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 0;
+  min-width: 60px;
+}
+.btn-cog {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  padding: 0;
+  min-width: 60px;
+  text-align: right;
+  color: var(--sub);
+}
+
+/* ── Role switcher bar (Login screen) ───────────────────────── */
+.role-bar {
+  display: flex;
+  background: var(--alt);
+  border-radius: 12px;
+  padding: 4px;
+  margin: 14px 20px 0;
+}
+.role-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  padding: 8px 4px;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--sub);
+  transition: all 0.2s;
+}
+.role-btn.on {
+  background: var(--sf);
+  color: var(--tx);
+  font-weight: 700;
+}
+
+/* ── Content wrapper ────────────────────────────────────────── */
+.content {
+  padding: 18px 20px 28px;
+}
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.card {
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 15px 24px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  text-align: center;
+  margin-bottom: 10px;
+  transition: all 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-ac    { background: var(--ac);  color: #fff; }
+.btn-ok    { background: var(--ok);  color: #fff; }
+.btn-ghost { background: transparent; border: 1.5px solid var(--bd); color: var(--tx); }
+.btn-ghost:hover { background: var(--alt); }
+.btn-muted { background: var(--alt); color: var(--tx); }
+
+/* ── Module tiles (Home screen) ─────────────────────────────── */
+.module-tile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 18px;
+  padding: 18px 20px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-align: left;
+  width: 100%;
+}
+.module-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.m-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.m-arrow {
+  color: var(--sub);
+  font-size: 20px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Progress bar ───────────────────────────────────────────── */
+.prog-track {
+  height: 8px;
+  background: var(--alt);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  background: var(--ac);
+  border-radius: 4px;
+  transition: width 0.4s;
+}
+
+/* ── Badges ─────────────────────────────────────────────────── */
+.badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 8px; }
+.b-ok   { background: rgba(58, 148, 98,  0.14); color: var(--ok); }
+.b-warn { background: rgba(214, 139, 37, 0.14); color: var(--warn); }
+.b-er   { background: rgba(200, 92, 58,  0.14); color: var(--er); }
+.b-ac   { background: var(--acl); color: var(--ac); }
+
+/* ── Toggle switch ──────────────────────────────────────────── */
+.toggle {
+  width: 50px;
+  height: 28px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on  { background: var(--ok); }
+.toggle.off { background: var(--alt); }
+.toggle-knob {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 3px;
+  transition: left 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+}
+.toggle.on  .toggle-knob { left: 25px; }
+.toggle.off .toggle-knob { left: 3px; }
+
+/* ── Settings overlay ───────────────────────────────────────── */
+/*
+  In React this is a conditional render rather than display:flex/none,
+  but the animation classes still apply.
+*/
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+@keyframes fadeBg {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.overlay-enter { animation: fadeBg 0.2s; }
+
+.overlay-panel {
+  background: var(--sf);
+  border-radius: 24px 24px 0 0;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+@keyframes panelUp {
+  from { transform: translateY(24px); }
+  to   { transform: none; }
+}
+.overlay-panel { animation: panelUp 0.22s ease; }
+
+/* ── Theme picker (inside settings overlay) ─────────────────── */
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.theme-opt {
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+  border: 2.5px solid transparent;
+}
+.theme-opt.sel  { font-weight: 700; }
+.theme-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Text size buttons ──────────────────────────────────────── */
+.size-row { display: flex; gap: 8px; margin-bottom: 20px; }
+.size-btn { flex: 1; border: none; border-radius: 10px; padding: 10px 8px; cursor: pointer; font-weight: 600; transition: all 0.15s; }
+.size-btn.on  { background: var(--ac); color: #fff; }
+.size-btn.off { background: var(--alt); color: var(--tx); }
+
+/* ── Letter display (Watch screen) ─────────────────────────── */
+.letter-big {
+  font-size: 130px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: -2px;
+  transition: color 0.5s;
+}
+.l-idle { color: var(--alt); }
+.l-anim { color: var(--ac); }
+.l-done { color: var(--tx); }
+
+/* ── Step dots (Watch / Try screen) ────────────────────────── */
+.step-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+.sdot { width: 9px; height: 9px; border-radius: 50%; background: var(--alt); transition: background 0.3s; }
+.sdot.lit { background: var(--ac); }
+
+/* ── Stroke steps list (Guide screen) ──────────────────────── */
+.sstep { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 9px; }
+.snum {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--acl);
+  color: var(--ac);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Paper / writing area (Try screen) ─────────────────────── */
+.paper {
+  background: var(--sf);
+  border: 2.5px dashed var(--bd);
+  border-radius: 20px;
+  height: 175px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  position: relative;
+  transition: border-color 0.3s;
+}
+.paper.active {
+  border-color: var(--ac);
+  border-style: solid;
+}
+.paper-ref {
+  position: absolute;
+  top: 12px; right: 16px;
+  font-size: 44px;
+  color: var(--alt);
+  font-weight: 900;
+  font-family: Georgia, serif;
+}
+
+/* ── Gripper / sensor status row ────────────────────────────── */
+.grip-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--acl);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+.gdot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.gdot-ok { background: var(--ok); box-shadow: 0 0 0 3px rgba(58, 148, 98, 0.2); }
+.gdot-off { background: var(--er); }
+
+/* ── Pulse animation ────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(58, 148, 98, 0.4); }
+  50%       { box-shadow: 0 0 0 9px rgba(58, 148, 98, 0); }
+}
+.pulse { animation: pulse 1.5s infinite; }
+
+/* ── Correction pair (b vs d) ───────────────────────────────── */
+.corr-pair { display: flex; justify-content: center; gap: 44px; margin-bottom: 16px; }
+.lsm { font-size: 64px; font-weight: 900; font-family: Georgia, serif; line-height: 1; }
+
+/* ── Help / tip box ─────────────────────────────────────────── */
+.helpbox {
+  border: 1.5px solid rgba(58, 148, 98, 0.22);
+  background: rgba(58, 148, 98, 0.06);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--tx);
+  line-height: 1.55;
+}
+
+/* ── Win screen ─────────────────────────────────────────────── */
+.win-icon { font-size: 84px; text-align: center; margin: 28px 0 18px; line-height: 1; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--sf); border: 1px solid var(--bd); border-radius: 16px; padding: 16px; text-align: center; }
+.sv { font-size: 22px; font-weight: 800; color: var(--tx); }
+.sl { font-size: 11px; color: var(--sub); margin-top: 3px; }
+
+/* ── Letter chips (Win / Parent screens) ────────────────────── */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 20px; font-family: Georgia, serif; }
+.chip-ok { background: rgba(58, 148, 98, 0.12); color: var(--ok); border: 1.5px solid rgba(58, 148, 98, 0.28); }
+.chip-no { background: var(--alt); color: var(--sub); border: 1.5px solid var(--bd); }
+
+/* ── Trend bars (Educator / Parent) ─────────────────────────── */
+.trow { margin-bottom: 14px; }
+.tlabel { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.ttrack { height: 8px; background: var(--alt); border-radius: 4px; overflow: hidden; }
+.tfill  { height: 100%; border-radius: 4px; background: var(--ac); }
+
+/* ── Student row cards (Educator) ───────────────────────────── */
+.sturow { background: var(--sf); border: 1px solid var(--bd); border-radius: 14px; padding: 13px 15px; margin-bottom: 10px; }
+.stuinfo { display: flex; align-items: center; gap: 12px; margin-bottom: 9px; }
+.avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--acl);
+  color: var(--ac);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* ── Metric cards (Educator / Parent) ───────────────────────── */
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.mc { background: var(--sf); border: 1px solid var(--bd); border-radius: 14px; padding: 13px 10px; text-align: center; }
+.mv { font-size: 22px; font-weight: 900; color: var(--ac); }
+.ml { font-size: 10px; color: var(--sub); margin-top: 3px; line-height: 1.35; }
+
+/* ── Tabs ────────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.tab { background: var(--alt); color: var(--sub); border: none; border-radius: 10px; padding: 8px 18px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.15s; }
+.tab.on { background: var(--ac); color: #fff; }
+
+/* ── Activity / assign rows (Educator) ─────────────────────── */
+.arow { display: flex; align-items: flex-start; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--bd); }
+.arow:last-child { border: none; }
+.acheck { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; margin-top: 2px; }
+.acheck.y { background: var(--ac); color: #fff; }
+.acheck.n { background: var(--alt); border: 1.5px solid var(--bd); }
+
+/* ── Section label ──────────────────────────────────────────── */
+.slabel { font-size: 12px; font-weight: 700; color: var(--sub); letter-spacing: 0.06em; margin-bottom: 10px; margin-top: 2px; }
+
+/* ── Bar chart (weekly days) ────────────────────────────────── */
+.bar-chart { display: flex; gap: 8px; align-items: flex-end; height: 80px; margin-top: 10px; }
+.bcol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bbar { width: 100%; border-radius: 4px 4px 0 0; background: var(--ac); min-height: 4px; }
+.bday { font-size: 11px; color: var(--sub); }
+.bbar.empty { background: var(--alt); }
+
+/* ── Access / settings rows (Settings overlay) ──────────────── */
+.acessrow { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--bd); }
+.acessrow:last-child { border: none; }
+
+/* ── "Not built yet" warning banner ────────────────────────── */
+.nbanner {
+  background: rgba(212, 136, 42, 0.1);
+  border: 1.5px solid rgba(212, 136, 42, 0.3);
+  border-radius: 12px;
+  padding: 11px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--warn);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+/* ── Reading mode cards (Settings overlay) ──────────────────── */
+.rm-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 20px; scrollbar-width: none; }
+.rm-scroll::-webkit-scrollbar { display: none; }
+.rm-card {
+  min-width: 110px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  padding: 13px 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.18s;
+  flex-shrink: 0;
+  background: var(--alt);
+}
+.rm-card:hover { transform: translateY(-2px); }
+.rm-card.sel { border-color: var(--ac); background: var(--acl); }
+.rm-icon { font-size: 26px; margin-bottom: 6px; }
+.rm-name { font-size: 12px; font-weight: 700; color: var(--tx); display: block; margin-bottom: 3px; }
+.rm-tag  { font-size: 10px; color: var(--sub); line-height: 1.35; display: block; }
+
+/* ── Reading mode active badge ──────────────────────────────── */
+.rm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--acl);
+  color: var(--ac);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
