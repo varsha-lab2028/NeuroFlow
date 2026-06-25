@@ -1,6 +1,6 @@
 # NeuroFlow 🧠✏️
 
-> **A smart pencil gripper system for neurodivergent children** — real-time letter recognition and haptic feedback to support early writing development.
+> **A smart pencil gripper system for neurodivergent children** — real-time digit and letter recognition with haptic feedback to support early writing development.
 
 Built by **Team Glitchmore Girls** at IIIT Delhi · 🏆 Special Mention, Education Category — WitchHunt Hackathon (selected from 6,000+ participants, 1,000+ teams, 373 prototypes, top 40 finalists)
 
@@ -17,7 +17,7 @@ Built by **Team Glitchmore Girls** at IIIT Delhi · 🏆 Special Mention, Educat
 
 ## 🧩 The Problem
 
-Children aged 4–9 with dyslexia and other neurodivergent profiles frequently reverse visually similar letters and digits — particularly **b, d, p, q** and numerals — during early writing. Traditional correction methods rely on repetitive drill, which can be discouraging. Existing assistive tools are either screen-based or passive, with no real-time physical feedback during the act of writing.
+Children aged 4–9 with dyslexia and other neurodivergent profiles frequently reverse visually similar letters and digits during early writing. Traditional correction relies on repetitive drill, which can be discouraging. Existing assistive tools are screen-based or passive — none deliver real-time physical feedback during the act of writing.
 
 ---
 
@@ -25,12 +25,12 @@ Children aged 4–9 with dyslexia and other neurodivergent profiles frequently r
 
 NeuroFlow is a **smart pencil gripper** that sits on a standard pencil and:
 
-1. **Captures** handwriting motion data via an IMU sensor in real time
-2. **Classifies** the letter or digit being written using on-device ML
-3. **Delivers haptic feedback** immediately when a reversal is detected
-4. **Logs practice sessions** so educators can track progress over time
+1. **Captures** 6-axis IMU motion data in real time as the child writes
+2. **Classifies** the digit or letter being written using a custom-trained 1D CNN
+3. **Delivers haptic feedback** immediately when a NONE (unrecognized / reversed) result is detected
+4. **Logs practice sessions** so educators and parents can track progress over time
 
-The system is non-punitive by design. Feedback is corrective, not evaluative — the language throughout the app deliberately uses "practice activities" and "classroom focus," never "homework" or "assignments."
+The system is non-punitive by design. Feedback is corrective, not evaluative — the app uses "practice activities" and "classroom focus" throughout, never "homework" or "assignments."
 
 ---
 
@@ -39,32 +39,35 @@ The system is non-punitive by design. Feedback is corrective, not evaluative —
 ```
 ┌─────────────────────────────────────────────────────┐
 │                   Hardware Layer                    │
-│   Arduino Nano 33 BLE + LSM9DS1 IMU + FSR Sensor   │
-│              + Coin Vibration Motor                 │
+│     Arduino + MPU-6050 IMU + Coin Vibration Motor   │
 └────────────────────┬────────────────────────────────┘
-                     │ BLE / Serial
+                     │ USB Serial (115200 baud)
+                     │ ax, ay, az, gx, gy, gz
 ┌────────────────────▼────────────────────────────────┐
 │              Python ML Layer (hardwre_recog.py)     │
-│  • 1D CNN — letter classifier (b/d/p/q)             │
-│  • 1D CNN — digit classifier (1–9 + NONE)           │
-│  • Flask server (port 5000) for model serving       │
-│  • NONE events trigger haptic feedback signal       │
+│  • Gesture segmentation (motion threshold-based)    │
+│  • 1D CNN digit classifier (0–9 + NONE)             │
+│  • NONE detection → triggers haptic motor signal    │
+│  • POSTs results to Java backend                    │
 └────────────────────┬────────────────────────────────┘
                      │ REST (HTTP POST)
+                     │ /api/digit-result · /api/none-event
 ┌────────────────────▼────────────────────────────────┐
-│           Java Backend (Spring Boot)                │
+│           Java Backend (Spring Boot :8080)          │
 │  • REST API · SQLite (neuroflow.db)                 │
 │  • Models: User, Student, PracticeSession,          │
 │    ErrorPattern, PracticeActivity                   │
 │  • Tables: digit_attempts, level_progress,          │
 │    none_events                                      │
 └────────────────────┬────────────────────────────────┘
-                     │ axios
+                     │ polls every 1.5s
 ┌────────────────────▼────────────────────────────────┐
-│            React Frontend (Vite)                    │
-│  • Dashboard · Progress charts (recharts)           │
-│  • NoneTrendChart — daily NONE counts               │
+│        React Frontend (Vite + React :5173)          │
+│  • Educator & Parent dashboards                     │
+│  • Numeracy module (Watch → Try flow)               │
+│  • NoneTrendChart — daily NONE counts via recharts  │
 │    (downward trend = improvement)                   │
+│  • ThinkingGames, GuideScreen, WinScreen            │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -72,22 +75,20 @@ The system is non-punitive by design. Feedback is corrective, not evaluative —
 
 ## 🤖 ML Pipeline
 
-### Letter Model (`neuroflow_model_v2.keras`)
-- **Architecture**: 1D CNN
-- **Input**: 100 × 6 (IMU axes: ax, ay, az, gx, gy, gz)
-- **Classes**: b, d, p, q (4-class)
-- **Dataset**: OnHW-chars (Fraunhofer IIS / STABILO)
-- **Splits**: 0–3 train · split 4 held-out (writer-independent)
-- **Accuracy**: 100% on held-out writer-independent test set
-- **Scaler**: `scaler_params_v2.json` (JSON, not pickle — cross-platform safe)
-
 ### Digit Model (`digit_model.h5`)
-- **Input**: 50 × 6
-- **Classes**: digits 1–9 + NONE (10-class)
-- **NONE outputs**: trigger haptic feedback + log to `none_events` table
+- **Architecture**: 1D CNN
+- **Input**: 50 × 6 time-steps (ax, ay, az, gx, gy, gz from MPU-6050)
+- **Classes**: 0–9 + NONE (11-class)
+- **Data**: Custom-collected gesture data using the MPU-6050 sensor
+- **Normalization**: `digit_norm_params.json` — stores per-feature mean and std (JSON, not pickle, for cross-platform compatibility)
+- **NONE outputs**: trigger haptic motor feedback + log to `none_events` table
 
-### Key Design Decision
-Reversed letters are not treated as a separate "reversal" class. A reversed *b* is simply a *d* — so reversal detection falls out naturally from letter identification. No correct/reversed class pairs needed.
+### Gesture Segmentation
+Motion intensity is calculated from both accelerometer and gyroscope magnitude. Recording starts when intensity exceeds a threshold and ends after the motion has been still for 1.2 seconds. Sequences are smoothed with a moving average filter before being fed to the model.
+
+### Key Design Notes
+- Normalization parameters are stored as JSON (not pickle) — works across Python versions and operating systems.
+- The `NONE` class handles unrecognized gestures and low-confidence outputs, decoupling correction from the classifier's confidence directly.
 
 ---
 
@@ -95,11 +96,12 @@ Reversed letters are not treated as a separate "reversal" class. A reversed *b* 
 
 | Component | Part |
 |---|---|
-| Microcontroller | Arduino Nano 33 BLE |
-| IMU | LSM9DS1 (onboard) |
-| Pressure sensor | FSR (Force Sensitive Resistor) |
+| Microcontroller | Arduino (with USB serial) |
+| IMU | MPU-6050 (6-axis accelerometer + gyroscope) |
 | Haptic actuator | Coin vibration motor |
-| Enclosure | 3D-printed pencil grip (OpenSCAD, watertight mesh) |
+| Enclosure | 3D-printed pencil grip |
+
+The Arduino sends raw `ax,ay,az,gx,gy,gz` values at 115200 baud over USB serial. The Python script reads and classifies these in real time.
 
 ---
 
@@ -107,20 +109,30 @@ Reversed letters are not treated as a separate "reversal" class. A reversed *b* 
 
 ```
 NeuroFlow/
-├── java_backend/           # Spring Boot REST API (Maven)
+├── java_backend/               # Spring Boot REST API (Maven)
+│   ├── src/main/java/com/neuroflow/
+│   │   ├── api/                # Controllers (ML, Practice, Analytics, Auth)
+│   │   ├── config/             # CORS, DatabaseManager
+│   │   ├── dao/                # DAOs for all entities
+│   │   └── model/              # Java models
+│   └── pom.xml
+├── neuroflow-frontend/         # React + Vite frontend
 │   └── src/
-├── neuroflow-ui/           # React + Vite frontend
-│   └── src/
-├── neuroflow-server/       # Flask ML server
-│   ├── server.py
-│   ├── neuroflow_model_v2.keras
-│   ├── digit_model.h5
-│   └── scaler_params_v2.json
-├── hardwre_recog.py        # Python BLE → classify → POST to backend
-├── arduino/                # Arduino Nano 33 BLE firmware
-├── openscad/               # 3D-printable pencil grip design
-├── notebooks/              # Training notebooks (Google Colab)
-└── neuroflow.db            # SQLite database
+│       ├── screens/            # HomeScreen, NumeracyScreen, NumberTryScreen,
+│       │                       # NumberWatchScreen, EducatorDashboard,
+│       │                       # ParentDashboard, TryScreen, WatchScreen,
+│       │                       # GuideScreen, WinScreen, ThinkingGames
+│       ├── components/         # NoneTrendChart, SettingsOverlay, TopBar, RoleBar
+│       ├── api/                # axios calls (analytics, auth, practice, students)
+│       └── context/            # AuthContext, ThemeContext
+├── hardwre_recog.py            # Python: serial read → classify → POST to backend
+├── digit_model.h5              # Trained 1D CNN digit model
+├── digit_norm_params.json      # Normalization parameters (mean, std per feature)
+├── neuroflow.db                # SQLite database
+├── GRIPPER_USB_SETUP.md        # Hardware connection guide
+├── start.bat                   # Windows one-click startup
+├── start.sh                    # Mac/Linux startup script
+└── old ML version/             # Archived: earlier prototype using OnHW-chars dataset
 ```
 
 ---
@@ -129,52 +141,70 @@ NeuroFlow/
 
 ### Prerequisites
 - Java 17+, Maven
-- Python 3.9+
+- Python 3.9+ with `tensorflow`, `pyserial`, `requests`
 - Node.js 18+
 - Arduino IDE (for firmware upload)
 
 ### 1. Java Backend
 ```bash
 cd java_backend
-.\mvnw.cmd spring-boot:run        # Windows PowerShell
-# or
-./mvnw spring-boot:run            # Mac/Linux
+./mvnw spring-boot:run          # Mac/Linux
+.\mvnw.cmd spring-boot:run      # Windows PowerShell
 ```
-Backend runs on **port 8080**.
+Wait for: `Started NeuroFlowApplication` — backend runs on **port 8080**.
 
 ### 2. React Frontend
 ```bash
-cd neuroflow-ui
+cd neuroflow-frontend
 npm install
 npm run dev
 ```
-Frontend runs on **port 5173**.
+Frontend runs on **port 5173**. Open `http://localhost:5173`.
 
-### 3. Python ML Server
+### 3. Python + Hardware
 ```bash
-cd neuroflow-server
-pip install -r requirements.txt
-python server.py
-```
-Flask server runs on **port 5000**.
+pip install tensorflow pyserial requests
 
-### 4. Hardware Recognition Script
-```bash
-python hardwre_recog.py
+# Set your serial port (find it with: ls /dev/cu.* on Mac, Device Manager on Windows)
+export NEUROFLOW_SERIAL_PORT=/dev/cu.usbserial-110   # Mac/Linux
+# or edit SERIAL_PORT in hardwre_recog.py directly
+
+python3 hardwre_recog.py
 ```
-Start this **after** the Java backend and React frontend are running.
+
+You'll see:
+```
+✅ Model loaded successfully
+✅ Labels loaded: ['0', '1', '2', ..., '9', 'NONE']
+✅ Connected to /dev/cu.usbserial-110
+```
 
 > **Startup order**: Java backend → React frontend → Python script
+
+### One-click startup
+```bash
+# Windows
+start.bat
+
+# Mac/Linux
+./start.sh
+```
+
+### Demo without hardware
+Go to **Numeracy → pick a digit → Try screen** and click **"Simulate ML result → (demo)"**. This calls the exact same backend endpoints — the Java → SQLite → React data flow is fully real. Only gesture capture is mocked.
 
 ---
 
 ## 📊 Features
 
-- **Level 1 — Digits**: Real-time digit recognition (1–9) with haptic correction
-- **Level 2 — Letters**: Real-time b/d/p/q classification with haptic correction
-- **Level 3 — Words**: Planned
-- **Progress Dashboard**: Daily practice trends, error pattern tracking, session history
-- **NoneTrendChart**: Visual downward trend as the child improves
+| Module | Status |
+|---|---|
+| Numeracy (digits 0–9) | ✅ Complete — real-time recognition + haptic feedback |
+| Letters (b/d/p/q) | 🔄 ML model exists; UI in progress |
+| Words | 📋 Planned |
+| Educator Dashboard | ✅ Practice session logs, error pattern tracking |
+| Parent Dashboard | ✅ Progress overview, NONE trend chart |
+| Thinking Games | ✅ Cognitive exercises |
 
 ---
 
@@ -189,9 +219,9 @@ One of 8 Special Mentions awarded across the entire event, selected from 6,000+ 
 
 | Name | Role |
 |---|---|
-| **Varsha** | ML pipeline, Java backend, system integration |
-| **Disha Kukkal** | Mobile app development |
-| **Yashswinie Arya** | Mobile app development |
+| **Varshamegana Atmakuri** | ML pipeline, Java backend, system integration |
+| **Disha Kukkal** | React frontend, mobile app |
+| **Yashswinie Arya** | React frontend, mobile app |
 | **Ms. Monalisa Gupta** | Mentor |
 
 IIIT Delhi
@@ -200,14 +230,18 @@ IIIT Delhi
 
 ## 🔮 Roadmap
 
-- [ ] TFLite conversion for on-device inference (currently Flask server)
-- [ ] Fine-tune models on real LSM9DS1 / MPU6050 hardware data
-- [ ] Level 3 — Words implementation
+- [ ] Letter module UI (Level 2 — b/d/p/q)
+- [ ] Words module (Level 3)
+- [ ] Fine-tune models on larger hardware-collected datasets
+- [ ] On-device TFLite inference (currently runs via Python script)
 - [ ] Browser extension for reading mode across any webpage
-- [ ] Expand language support beyond English letters
 
 ---
 
 ## 📄 License
 
-This project was built for educational and research purposes as part of the WitchHunt Hackathon.
+Built for educational and research purposes as part of the WitchHunt Hackathon.
+
+---
+
+*Glitchmore Girls — building at the intersection of neuroscience and technology.*
